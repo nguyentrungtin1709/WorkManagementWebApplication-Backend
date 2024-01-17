@@ -2,8 +2,10 @@ package com.application.WorkManagement.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Setter
@@ -14,7 +16,7 @@ import java.time.LocalDateTime;
 @Table(
        name = "khong_gian_lam_viec"
 )
-public class WorkSpace {
+public class Workspace {
 
     @Id
     @GeneratedValue
@@ -36,6 +38,7 @@ public class WorkSpace {
     )
     private String description;
 
+    @CreationTimestamp
     @Column(
             name = "kglv_ngay_tao"
     )
@@ -44,8 +47,25 @@ public class WorkSpace {
     @ManyToOne
     @JoinColumn(
             name = "tk_ma_so",
-            nullable = false,
-            foreignKey = @ForeignKey(name = "kglv_fk_tai_khoan")
+            nullable = false
     )
     private Account account;
+
+    @OneToMany(
+            cascade = {CascadeType.ALL},
+            mappedBy = "workspace"
+    )
+    private List<WorkspaceMember> workspaceMembers;
+
+    @OneToMany(
+            cascade = {CascadeType.ALL},
+            mappedBy = "workspace"
+    )
+    private List<WorkspaceInviteCode> workspaceInviteCodes;
+
+    @OneToMany(
+            cascade = {CascadeType.ALL},
+            mappedBy = "workspace"
+    )
+    private List<TableEntity> tableEntities;
 }

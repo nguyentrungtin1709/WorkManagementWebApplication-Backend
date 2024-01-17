@@ -1,6 +1,7 @@
 package com.application.WorkManagement.enums;
 
-public enum Role {
-    USER,
+public enum WorkspaceRole {
+    OBSERVER,
+    MEMBER,
     ADMIN
 }

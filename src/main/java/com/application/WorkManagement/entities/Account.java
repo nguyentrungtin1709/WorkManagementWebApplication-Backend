@@ -1,6 +1,6 @@
 package com.application.WorkManagement.entities;
 
-import com.application.WorkManagement.enums.Role;
+import com.application.WorkManagement.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -88,27 +88,42 @@ public class Account implements UserDetails {
             name = "tk_role",
             nullable = false
     )
-    private Role role;
+    private UserRole userRole;
 
-
-    @Column(
-            name = "tk_ngay_tao",
-            nullable = false
-    )
     @CreationTimestamp
+    @Column(
+            name = "tk_ngay_tao"
+    )
     private LocalDateTime createdAt;
 
     @OneToMany(
             cascade = {CascadeType.ALL},
-            mappedBy = "account",
-            fetch = FetchType.LAZY
+            mappedBy = "account"
     )
-    private List<WorkSpace> workSpaces;
+    private List<Workspace> workspaces;
+
+    @OneToMany(
+            cascade = {CascadeType.ALL},
+            mappedBy = "account"
+    )
+    private List<WorkspaceMember> workspaceMembers;
+
+    @OneToMany(
+            cascade = {CascadeType.ALL},
+            mappedBy = "account"
+    )
+    private List<WorkspaceInviteCode> workspaceInviteCodes;
+
+    @OneToMany(
+            cascade = {CascadeType.ALL},
+            mappedBy = "account"
+    )
+    private List<TableEntity> tableEntities;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(
-                new SimpleGrantedAuthority(role.name())
+                new SimpleGrantedAuthority(userRole.name())
         );
     }
 
