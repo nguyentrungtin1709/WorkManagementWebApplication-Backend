@@ -120,6 +120,30 @@ public class Account implements UserDetails {
     )
     private List<TableEntity> tableEntities;
 
+    @OneToMany(
+            cascade = {CascadeType.ALL},
+            mappedBy = "account"
+    )
+    private List<TableMember> tableMembers;
+
+    @OneToMany(
+            cascade = {CascadeType.ALL},
+            mappedBy = "account"
+    )
+    private List<TableStar> tableStars;
+
+    @OneToMany(
+            cascade = {CascadeType.ALL},
+            mappedBy = "account"
+    )
+    private List<Category> categories;
+
+    @OneToMany(
+            cascade = {CascadeType.ALL},
+            mappedBy = "account"
+    )
+    private List<Card> cards;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(

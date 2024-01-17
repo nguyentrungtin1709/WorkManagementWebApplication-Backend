@@ -7,6 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.net.URI;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Setter
@@ -78,4 +79,22 @@ public class TableEntity {
             nullable = false
     )
     private Workspace workspace;
+
+    @OneToMany(
+            cascade = {CascadeType.ALL},
+            mappedBy = "table"
+    )
+    private List<TableMember> tableMembers;
+
+    @OneToMany(
+            cascade = {CascadeType.ALL},
+            mappedBy = "table"
+    )
+    private List<TableStar> tableStars;
+
+    @OneToMany(
+            cascade = {CascadeType.ALL},
+            mappedBy = "table"
+    )
+    private List<Category> categories;
 }
