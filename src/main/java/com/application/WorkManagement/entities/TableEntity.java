@@ -97,4 +97,10 @@ public class TableEntity {
             mappedBy = "table"
     )
     private List<Category> categories;
+
+    @OneToMany(
+            cascade = {CascadeType.REMOVE},
+            mappedBy = "table"
+    )
+    private List<Activity> activities;
 }

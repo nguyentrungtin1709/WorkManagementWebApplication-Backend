@@ -1,11 +1,9 @@
 package com.application.WorkManagement.entities;
 
+import com.application.WorkManagement.enums.ActivityType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.type.TrueFalseConverter;
-import org.hibernate.type.YesNoConverter;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -17,34 +15,27 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(
-        name = "nhan_xet"
+        name = "hoat_dong"
 )
-public class Comment {
+public class Activity {
 
     @Id
     @Column(
-            name = "nx_ma_so"
+            name = "hd_ma_so"
     )
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID uuid;
 
     @Column(
-            name = "nx_noi_dung",
+            name = "hd_loai",
             nullable = false
     )
-    private String comment;
-
-
-    @Column(
-            name = "nx_da_cap_nhat",
-            nullable = false
-    )
-    @Convert(converter = TrueFalseConverter.class)
-    private Boolean update;
+    @Enumerated(value = EnumType.STRING)
+    private ActivityType activityType;
 
     @CreationTimestamp
     @Column(
-            name = "nx_ngay_tao"
+            name = "hd_ngay_tao"
     )
     private LocalDateTime createdAt;
 
@@ -57,9 +48,20 @@ public class Comment {
 
     @ManyToOne
     @JoinColumn(
-            name = "the_ma_so",
+            name = "bang_ma_so",
             nullable = false
     )
-    private Card card;
+    private TableEntity table;
 
+    @ManyToOne
+    @JoinColumn(
+            name = "dm_ma_so"
+    )
+    private Category category;
+
+    @ManyToOne
+    @JoinColumn(
+            name = "the_ma_so"
+    )
+    private Card card;
 }

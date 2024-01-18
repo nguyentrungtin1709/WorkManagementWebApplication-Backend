@@ -72,4 +72,10 @@ public class Category {
     )
     private List<Card> cards;
 
+    @OneToMany(
+            cascade = {CascadeType.REMOVE},
+            mappedBy = "category"
+    )
+    private List<Activity> activities;
+
 }

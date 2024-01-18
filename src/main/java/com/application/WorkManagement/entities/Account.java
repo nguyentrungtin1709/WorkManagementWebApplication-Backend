@@ -164,6 +164,22 @@ public class Account implements UserDetails {
     )
     private List<Deadline> deadlines;
 
+    @OneToMany(
+            mappedBy = "account"
+    )
+    private List<ListEntity> listEntities;
+
+    @OneToMany(
+            mappedBy = "account"
+    )
+    private List<TaskEntity> taskEntities;
+
+    @OneToMany(
+            cascade = {CascadeType.REMOVE},
+            mappedBy = "account"
+    )
+    private List<Activity> activities;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(

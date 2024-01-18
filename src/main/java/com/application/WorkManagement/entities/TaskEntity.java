@@ -2,8 +2,8 @@ package com.application.WorkManagement.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.type.TrueFalseConverter;
-import org.hibernate.type.YesNoConverter;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -15,47 +15,49 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(
-        name = "ngay_het_han"
+        name = "cong_viec"
 )
-public class Deadline {
+public class TaskEntity {
 
     @Id
     @Column(
-            name = "nhh_ma_so"
+            name = "cv_ma_so"
     )
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID uuid;
 
     @Column(
-            name = "nhh_ngay_het_han",
-            nullable = false
+            name = "cv_ten",
+            nullable = false,
+            length = 120
     )
-    private LocalDateTime deadline;
+    private String name;
+
 
     @Column(
-            name = "nhh_ngay_nhac_nho"
-    )
-    private LocalDateTime reminderDate;
-
-    @Column(
-            name = "nhh_hoan_thanh",
+            name = "cv_hoan_thanh",
             nullable = false
     )
     @Convert(converter = TrueFalseConverter.class)
     private Boolean complete;
 
+    @CreationTimestamp
+    @Column(
+            name = "cv_ngay_tao"
+    )
+    private LocalDateTime createdAt;
+
     @ManyToOne
     @JoinColumn(
-            name = "tk_ma_so",
-            nullable = false
+            name = "tk_ma_so"
     )
     private Account account;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(
-            name = "the_ma_so",
+            name = "vcl_ma_so",
             nullable = false
     )
-    private Card card;
+    private ListEntity listEntity;
 
 }

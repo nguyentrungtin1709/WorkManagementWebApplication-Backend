@@ -3,11 +3,9 @@ package com.application.WorkManagement.entities;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.type.TrueFalseConverter;
-import org.hibernate.type.YesNoConverter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -17,41 +15,33 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(
-        name = "nhan_xet"
+        name = "viec_can_lam"
 )
-public class Comment {
+public class ListEntity {
 
     @Id
     @Column(
-            name = "nx_ma_so"
+            name = "vcl_ma_so"
     )
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID uuid;
 
     @Column(
-            name = "nx_noi_dung",
-            nullable = false
+            name = "vcl_ten",
+            nullable = false,
+            length = 120
     )
-    private String comment;
-
-
-    @Column(
-            name = "nx_da_cap_nhat",
-            nullable = false
-    )
-    @Convert(converter = TrueFalseConverter.class)
-    private Boolean update;
+    private String name;
 
     @CreationTimestamp
     @Column(
-            name = "nx_ngay_tao"
+            name = "vcl_ngay_tao"
     )
     private LocalDateTime createdAt;
 
     @ManyToOne
     @JoinColumn(
-            name = "tk_ma_so",
-            nullable = false
+            name = "tk_ma_so"
     )
     private Account account;
 
@@ -61,5 +51,11 @@ public class Comment {
             nullable = false
     )
     private Card card;
+
+    @OneToMany(
+            cascade = {CascadeType.REMOVE},
+            mappedBy = "listEntity"
+    )
+    private List<TaskEntity> taskEntities;
 
 }

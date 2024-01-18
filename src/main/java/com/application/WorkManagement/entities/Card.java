@@ -89,4 +89,16 @@ public class Card {
             mappedBy = "card"
     )
     private Deadline deadline;
+
+    @OneToMany(
+            cascade = {CascadeType.REMOVE},
+            mappedBy = "card"
+    )
+    private List<ListEntity> listEntities;
+
+    @OneToMany(
+            cascade = {CascadeType.REMOVE},
+            mappedBy = "card"
+    )
+    private List<Activity> activities;
 }
