@@ -7,6 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Setter
@@ -26,11 +27,11 @@ import java.util.List;
 public class Category {
 
     @Id
-    @GeneratedValue
     @Column(
             name = "dm_ma_so"
     )
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID uuid;
 
     @Column(
             name = "dm_ten",
@@ -54,8 +55,7 @@ public class Category {
 
     @ManyToOne
     @JoinColumn(
-            name = "tk_ma_so",
-            nullable = false
+            name = "tk_ma_so"
     )
     private Account account;
 
@@ -67,7 +67,7 @@ public class Category {
     private TableEntity table;
 
     @OneToMany(
-            cascade = {CascadeType.ALL},
+            cascade = {CascadeType.REMOVE},
             mappedBy = "category"
     )
     private List<Card> cards;

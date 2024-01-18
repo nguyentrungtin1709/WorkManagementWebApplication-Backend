@@ -6,6 +6,8 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Setter
@@ -19,11 +21,11 @@ import java.time.LocalDateTime;
 public class Card {
 
     @Id
-    @GeneratedValue
     @Column(
             name = "the_ma_so"
     )
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID uuid;
 
     @Column(
             name = "the_ten",
@@ -53,8 +55,7 @@ public class Card {
 
     @ManyToOne
     @JoinColumn(
-            name = "tk_ma_so",
-            nullable = false
+            name = "tk_ma_so"
     )
     private Account account;
 
@@ -65,4 +66,27 @@ public class Card {
     )
     private Category category;
 
+    @OneToMany(
+            cascade = {CascadeType.REMOVE},
+            mappedBy = "card"
+    )
+    private List<CardMember> cardMembers;
+
+    @OneToMany(
+            cascade = {CascadeType.REMOVE},
+            mappedBy = "card"
+    )
+    private List<CardFollow> cardFollows;
+
+    @OneToMany(
+            cascade = {CascadeType.REMOVE},
+            mappedBy = "card"
+    )
+    private List<Comment> comments;
+
+    @OneToOne(
+            cascade = {CascadeType.REMOVE},
+            mappedBy = "card"
+    )
+    private Deadline deadline;
 }

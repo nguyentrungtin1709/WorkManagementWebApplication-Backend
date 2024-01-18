@@ -12,6 +12,7 @@ import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Setter
@@ -29,12 +30,13 @@ import java.util.List;
         }
 )
 public class Account implements UserDetails {
+
     @Id
-    @GeneratedValue
     @Column(
             name = "tk_ma_so"
     )
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID uuid;
 
     @Column(
             name = "tk_ho_ten",
@@ -81,13 +83,11 @@ public class Account implements UserDetails {
     )
     private LocalDateTime notification;
 
-    @Enumerated(
-            value = EnumType.STRING
-    )
     @Column(
             name = "tk_role",
             nullable = false
     )
+    @Enumerated(value = EnumType.STRING)
     private UserRole userRole;
 
     @CreationTimestamp
@@ -97,52 +97,72 @@ public class Account implements UserDetails {
     private LocalDateTime createdAt;
 
     @OneToMany(
-            cascade = {CascadeType.ALL},
             mappedBy = "account"
     )
     private List<Workspace> workspaces;
 
     @OneToMany(
-            cascade = {CascadeType.ALL},
+            cascade = {CascadeType.REMOVE},
             mappedBy = "account"
     )
     private List<WorkspaceMember> workspaceMembers;
 
     @OneToMany(
-            cascade = {CascadeType.ALL},
+            cascade = {CascadeType.REMOVE},
             mappedBy = "account"
     )
     private List<WorkspaceInviteCode> workspaceInviteCodes;
 
     @OneToMany(
-            cascade = {CascadeType.ALL},
             mappedBy = "account"
     )
     private List<TableEntity> tableEntities;
 
     @OneToMany(
-            cascade = {CascadeType.ALL},
+            cascade = {CascadeType.REMOVE},
             mappedBy = "account"
     )
     private List<TableMember> tableMembers;
 
     @OneToMany(
-            cascade = {CascadeType.ALL},
+            cascade = {CascadeType.REMOVE},
             mappedBy = "account"
     )
     private List<TableStar> tableStars;
 
     @OneToMany(
-            cascade = {CascadeType.ALL},
             mappedBy = "account"
     )
     private List<Category> categories;
 
     @OneToMany(
-            cascade = {CascadeType.ALL},
             mappedBy = "account"
     )
     private List<Card> cards;
+
+    @OneToMany(
+            cascade = {CascadeType.REMOVE},
+            mappedBy = "account"
+    )
+    private List<CardMember> cardMembers;
+
+    @OneToMany(
+            cascade = {CascadeType.REMOVE},
+            mappedBy = "account"
+    )
+    private List<CardFollow> cardFollows;
+
+    @OneToMany(
+            cascade = {CascadeType.REMOVE},
+            mappedBy = "account"
+    )
+    private List<Comment> comments;
+
+    @OneToMany(
+            cascade = {CascadeType.REMOVE},
+            mappedBy = "account"
+    )
+    private List<Deadline> deadlines;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

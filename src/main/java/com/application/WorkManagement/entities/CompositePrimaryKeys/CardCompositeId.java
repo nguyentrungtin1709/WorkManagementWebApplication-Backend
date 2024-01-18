@@ -1,7 +1,7 @@
 package com.application.WorkManagement.entities.CompositePrimaryKeys;
 
 import com.application.WorkManagement.entities.Account;
-import com.application.WorkManagement.entities.TableEntity;
+import com.application.WorkManagement.entities.Card;
 import lombok.*;
 
 import java.io.Serializable;
@@ -12,10 +12,10 @@ import java.io.Serializable;
 @EqualsAndHashCode
 @NoArgsConstructor
 @AllArgsConstructor
-public class TableCompositeId implements Serializable {
+public class CardCompositeId implements Serializable {
 
     private Account account;
 
-    private TableEntity table;
+    private Card card;
 
 }

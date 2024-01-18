@@ -3,13 +3,16 @@ package com.application.WorkManagement.entities.CompositePrimaryKeys;
 
 import com.application.WorkManagement.entities.Account;
 import com.application.WorkManagement.entities.Workspace;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.io.Serializable;
 
-@NoArgsConstructor
+@Setter
+@Getter
+@Builder
 @EqualsAndHashCode
+@NoArgsConstructor
+@AllArgsConstructor
 public class WorkspaceMemberId implements Serializable {
 
     private Account account;

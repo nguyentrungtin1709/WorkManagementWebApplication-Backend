@@ -8,6 +8,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Setter
@@ -27,11 +28,11 @@ import java.util.List;
 public class TableEntity {
 
     @Id
-    @GeneratedValue
     @Column(
             name = "bang_ma_so"
     )
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID uuid;
 
     @Column(
             name = "bang_ten",
@@ -68,8 +69,7 @@ public class TableEntity {
 
     @ManyToOne
     @JoinColumn(
-            name = "tk_ma_so",
-            nullable = false
+            name = "tk_ma_so"
     )
     private Account account;
 
@@ -81,19 +81,19 @@ public class TableEntity {
     private Workspace workspace;
 
     @OneToMany(
-            cascade = {CascadeType.ALL},
+            cascade = {CascadeType.REMOVE},
             mappedBy = "table"
     )
     private List<TableMember> tableMembers;
 
     @OneToMany(
-            cascade = {CascadeType.ALL},
+            cascade = {CascadeType.REMOVE},
             mappedBy = "table"
     )
     private List<TableStar> tableStars;
 
     @OneToMany(
-            cascade = {CascadeType.ALL},
+            cascade = {CascadeType.REMOVE},
             mappedBy = "table"
     )
     private List<Category> categories;

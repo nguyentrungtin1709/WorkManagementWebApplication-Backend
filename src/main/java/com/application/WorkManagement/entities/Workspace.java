@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Setter
@@ -19,11 +20,11 @@ import java.util.List;
 public class Workspace {
 
     @Id
-    @GeneratedValue
     @Column(
             name = "kglv_ma_so"
     )
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID uuid;
 
     @Column(
             name = "kglv_ten",
@@ -46,25 +47,24 @@ public class Workspace {
 
     @ManyToOne
     @JoinColumn(
-            name = "tk_ma_so",
-            nullable = false
+            name = "tk_ma_so"
     )
     private Account account;
 
     @OneToMany(
-            cascade = {CascadeType.ALL},
+            cascade = {CascadeType.REMOVE},
             mappedBy = "workspace"
     )
     private List<WorkspaceMember> workspaceMembers;
 
     @OneToMany(
-            cascade = {CascadeType.ALL},
+            cascade = {CascadeType.REMOVE},
             mappedBy = "workspace"
     )
     private List<WorkspaceInviteCode> workspaceInviteCodes;
 
     @OneToMany(
-            cascade = {CascadeType.ALL},
+            cascade = {CascadeType.REMOVE},
             mappedBy = "workspace"
     )
     private List<TableEntity> tableEntities;

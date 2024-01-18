@@ -50,9 +50,7 @@ public class WorkspaceInviteCode {
             name = "mmkglv_ma_moi",
             nullable = false
     )
-    @GeneratedValue(
-            strategy = GenerationType.UUID
-    )
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID inviteCode;
 
     @CreationTimestamp
