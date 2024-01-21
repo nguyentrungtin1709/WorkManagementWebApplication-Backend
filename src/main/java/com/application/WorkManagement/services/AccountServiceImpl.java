@@ -2,6 +2,7 @@ package com.application.WorkManagement.services;
 
 import com.application.WorkManagement.dto.mappers.AccountMapper;
 import com.application.WorkManagement.dto.requests.LoginRequest;
+import com.application.WorkManagement.dto.requests.ProfileRequest;
 import com.application.WorkManagement.dto.requests.RegisterRequest;
 import com.application.WorkManagement.dto.responses.AccountResponse;
 import com.application.WorkManagement.dto.responses.TokenResponse;
@@ -18,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Service
 public class AccountServiceImpl implements AccountService {
@@ -92,5 +94,31 @@ public class AccountServiceImpl implements AccountService {
                     .findAccountByEmail(email)
                     .orElseThrow(() -> new UsernameNotFoundException("Email không được đăng ký"))
         );
+    }
+
+    @Override
+    public AccountResponse updateProfileAccount(String email, ProfileRequest profile) {
+        Account account = accountRepository
+                .findAccountByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Email không được đăng ký"));
+        if (!account.getName().equals(profile.getName())){
+            account.setName(profile.getName());
+        }
+        if (checkUpdateOptionAttribute(account.getOrganization(), profile.getOrganization())){
+            account.setOrganization(profile.getOrganization());
+        }
+        if (checkUpdateOptionAttribute(account.getDepartment(), profile.getDepartment())){
+            account.setDepartment(profile.getDepartment());
+        }
+        if (checkUpdateOptionAttribute(account.getTitle(), profile.getTitle())){
+            account.setTitle(profile.getTitle());
+        }
+        return accountMapper.apply(
+                accountRepository.save(account)
+        );
+    }
+
+    public Boolean checkUpdateOptionAttribute(String origin, String other){
+        return Objects.nonNull(other) && !other.equals(origin);
     }
 }

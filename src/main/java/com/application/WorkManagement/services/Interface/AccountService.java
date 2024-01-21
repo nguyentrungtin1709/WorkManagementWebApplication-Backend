@@ -1,6 +1,7 @@
 package com.application.WorkManagement.services.Interface;
 
 import com.application.WorkManagement.dto.requests.LoginRequest;
+import com.application.WorkManagement.dto.requests.ProfileRequest;
 import com.application.WorkManagement.dto.requests.RegisterRequest;
 import com.application.WorkManagement.dto.responses.AccountResponse;
 import com.application.WorkManagement.dto.responses.TokenResponse;
@@ -13,4 +14,7 @@ public interface AccountService {
     TokenResponse createToken(LoginRequest loginRequest);
 
     AccountResponse readAccount(String email);
+
+    AccountResponse updateProfileAccount(String email, ProfileRequest profile);
+
 }
