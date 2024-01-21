@@ -1,5 +1,7 @@
 package com.application.WorkManagement.security;
 
+import com.application.WorkManagement.dto.mappers.UserRoleMapper;
+import com.application.WorkManagement.enums.UserRole;
 import com.application.WorkManagement.security.key.RSAKeyProperties;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
@@ -19,6 +21,8 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
 import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler;
 import org.springframework.security.web.SecurityFilterChain;
@@ -32,11 +36,14 @@ import java.util.List;
 @EnableWebSecurity
 public class WebSecurity {
 
-    private RSAKeyProperties rsaKeyProperties;
+    private final RSAKeyProperties rsaKeyProperties;
+
+    private final UserRoleMapper userRoleMapper;
 
     @Autowired
-    public WebSecurity(RSAKeyProperties rsaKeyProperties) {
+    public WebSecurity(RSAKeyProperties rsaKeyProperties, UserRoleMapper userRoleMapper) {
         this.rsaKeyProperties = rsaKeyProperties;
+        this.userRoleMapper = userRoleMapper;
     }
 
     @Bean
@@ -50,6 +57,15 @@ public class WebSecurity {
                                 "/api/v1/auth/**"
                         )
                         .permitAll()
+                        .requestMatchers(
+                                "/api/v1/account/**"
+                        )
+                        .hasAnyAuthority(
+                                userRoleMapper.apply(UserRole.USER.name()),
+                                userRoleMapper.apply(UserRole.ADMIN.name())
+                        )
+                        .anyRequest()
+                        .authenticated()
             )
             .sessionManagement(session ->
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -95,5 +111,13 @@ public class WebSecurity {
         return new NimbusJwtEncoder(jwkSource);
     }
 
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+        return jwtAuthenticationConverter;
+    }
 
 }

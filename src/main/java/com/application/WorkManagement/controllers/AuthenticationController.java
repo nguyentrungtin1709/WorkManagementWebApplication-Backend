@@ -1,7 +1,9 @@
 package com.application.WorkManagement.controllers;
 
+import com.application.WorkManagement.dto.requests.LoginRequest;
 import com.application.WorkManagement.dto.requests.RegisterRequest;
 import com.application.WorkManagement.dto.responses.AccountResponse;
+import com.application.WorkManagement.dto.responses.TokenResponse;
 import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
 import com.application.WorkManagement.services.Interface.AccountService;
 import jakarta.validation.Valid;
@@ -18,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/auth")
 public class AuthenticationController {
 
-    private AccountService accountService;
+    private final AccountService accountService;
 
     @Autowired
     public AuthenticationController(AccountService accountService) {
@@ -35,6 +37,19 @@ public class AuthenticationController {
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(
                     accountService.createAccount(registerRequest)
+                );
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<TokenResponse> login(
+            @Valid @RequestBody
+            LoginRequest loginRequest
+    ){
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        accountService.createToken(loginRequest)
                 );
     }
 

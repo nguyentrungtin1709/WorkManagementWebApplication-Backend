@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class AccountDetailsService implements UserDetailsService {
 
-    private AccountRepository accountRepository;
+    private final AccountRepository accountRepository;
 
     @Autowired
     public AccountDetailsService(AccountRepository accountRepository) {

@@ -1,5 +1,6 @@
 package com.application.WorkManagement.dto.responses;
 
+import com.application.WorkManagement.enums.UserRole;
 import lombok.*;
 
 import java.net.URI;
@@ -26,6 +27,8 @@ public class AccountResponse {
     private String department;
 
     private String title;
+
+    private UserRole role;
 
     private LocalDateTime notification;
 

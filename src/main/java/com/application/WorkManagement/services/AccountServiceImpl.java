@@ -1,43 +1,50 @@
 package com.application.WorkManagement.services;
 
 import com.application.WorkManagement.dto.mappers.AccountMapper;
+import com.application.WorkManagement.dto.requests.LoginRequest;
 import com.application.WorkManagement.dto.requests.RegisterRequest;
 import com.application.WorkManagement.dto.responses.AccountResponse;
+import com.application.WorkManagement.dto.responses.TokenResponse;
 import com.application.WorkManagement.entities.Account;
 import com.application.WorkManagement.enums.UserRole;
 import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
 import com.application.WorkManagement.repositories.AccountRepository;
 import com.application.WorkManagement.services.Interface.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Service
 public class AccountServiceImpl implements AccountService {
 
-    private AccountRepository accountRepository;
+    private final AccountRepository accountRepository;
 
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
-    private DaoAuthenticationProvider daoAuthenticationProvider;
+    private final DaoAuthenticationProvider daoAuthenticationProvider;
 
-    private AccountMapper accountMapper;
+    private final JsonWebTokenService jsonWebTokenService;
+
+    private final AccountMapper accountMapper;
 
     @Autowired
     public AccountServiceImpl(
             AccountRepository accountRepository,
             PasswordEncoder passwordEncoder,
             DaoAuthenticationProvider daoAuthenticationProvider,
-            AccountMapper accountMapper
+            AccountMapper accountMapper,
+            JsonWebTokenService jsonWebTokenService
     ) {
         this.accountRepository = accountRepository;
         this.passwordEncoder = passwordEncoder;
         this.daoAuthenticationProvider = daoAuthenticationProvider;
         this.accountMapper = accountMapper;
+        this.jsonWebTokenService = jsonWebTokenService;
     }
 
     @Override
@@ -59,6 +66,31 @@ public class AccountServiceImpl implements AccountService {
                 .build();
         return accountMapper.apply(
                 accountRepository.save(account)
+        );
+    }
+
+    @Override
+    public TokenResponse createToken(LoginRequest loginRequest){
+        daoAuthenticationProvider.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        loginRequest.getEmail(),
+                        loginRequest.getPassword()
+                )
+        );
+        Account account = accountRepository
+                .findAccountByEmail(loginRequest.getEmail())
+                .orElseThrow(() -> new UsernameNotFoundException("Email không được đăng ký"));
+        return new TokenResponse(
+                jsonWebTokenService.generateToken(account)
+        );
+    }
+
+    @Override
+    public AccountResponse readAccount(String email){
+        return accountMapper.apply(
+                accountRepository
+                    .findAccountByEmail(email)
+                    .orElseThrow(() -> new UsernameNotFoundException("Email không được đăng ký"))
         );
     }
 }

@@ -20,6 +20,7 @@ public class AccountMapper implements Function<Account, AccountResponse> {
                 .department(account.getDepartment())
                 .title(account.getTitle())
                 .notification(account.getNotification())
+                .role(account.getUserRole())
                 .build();
     }
 }
