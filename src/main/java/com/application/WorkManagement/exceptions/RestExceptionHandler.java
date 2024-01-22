@@ -2,6 +2,8 @@ package com.application.WorkManagement.exceptions;
 
 import com.application.WorkManagement.dto.responses.ExceptionResponse;
 import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
+import com.application.WorkManagement.exceptions.custom.EmptyImageException;
+import com.application.WorkManagement.exceptions.custom.InvalidFileExtensionException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -35,6 +37,26 @@ public class RestExceptionHandler {
 
     @ExceptionHandler(CustomDuplicateException.class)
     public ResponseEntity<ExceptionResponse> customDuplicateException(CustomDuplicateException exception){
+        return ResponseEntity
+                .badRequest()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        new ExceptionResponse(exception.getMessage())
+                );
+    }
+
+    @ExceptionHandler(EmptyImageException.class)
+    public ResponseEntity<ExceptionResponse> emptyImageException(EmptyImageException exception){
+        return ResponseEntity
+                .badRequest()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        new ExceptionResponse(exception.getMessage())
+                );
+    }
+
+    @ExceptionHandler(InvalidFileExtensionException.class)
+    public ResponseEntity<ExceptionResponse> invalidFileExtensionException(InvalidFileExtensionException exception){
         return ResponseEntity
                 .badRequest()
                 .contentType(MediaType.APPLICATION_JSON)

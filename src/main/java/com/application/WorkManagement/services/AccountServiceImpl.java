@@ -9,15 +9,22 @@ import com.application.WorkManagement.dto.responses.TokenResponse;
 import com.application.WorkManagement.entities.Account;
 import com.application.WorkManagement.enums.UserRole;
 import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
+import com.application.WorkManagement.exceptions.custom.EmptyImageException;
+import com.application.WorkManagement.exceptions.custom.InvalidFileExtensionException;
 import com.application.WorkManagement.repositories.AccountRepository;
 import com.application.WorkManagement.services.Interface.AccountService;
+import com.application.WorkManagement.services.Interface.UploadImageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -34,19 +41,22 @@ public class AccountServiceImpl implements AccountService {
 
     private final AccountMapper accountMapper;
 
+    private final UploadImageService uploadImageService;
+
     @Autowired
     public AccountServiceImpl(
             AccountRepository accountRepository,
             PasswordEncoder passwordEncoder,
             DaoAuthenticationProvider daoAuthenticationProvider,
             AccountMapper accountMapper,
-            JsonWebTokenService jsonWebTokenService
+            JsonWebTokenService jsonWebTokenService, UploadImageService uploadImageService
     ) {
         this.accountRepository = accountRepository;
         this.passwordEncoder = passwordEncoder;
         this.daoAuthenticationProvider = daoAuthenticationProvider;
         this.accountMapper = accountMapper;
         this.jsonWebTokenService = jsonWebTokenService;
+        this.uploadImageService = uploadImageService;
     }
 
     @Override
@@ -113,6 +123,26 @@ public class AccountServiceImpl implements AccountService {
         if (checkUpdateOptionAttribute(account.getTitle(), profile.getTitle())){
             account.setTitle(profile.getTitle());
         }
+        return accountMapper.apply(
+                accountRepository.save(account)
+        );
+    }
+
+    @Override
+    public AccountResponse updateAvatarAccount(
+            String email,
+            MultipartFile file
+    ) throws URISyntaxException, InvalidFileExtensionException, IOException, EmptyImageException {
+        Account account = accountRepository
+                .findAccountByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Email không được đăng ký"));
+        if (account.getAvatar() != null){
+            String path = account.getAvatar().getPath();
+            String fileName = path.substring(path.lastIndexOf("/") + 1);
+            uploadImageService.removeFileFromS3(fileName);
+        }
+        URI avatarURI = uploadImageService.uploadImageToS3(file);
+        account.setAvatar(avatarURI);
         return accountMapper.apply(
                 accountRepository.save(account)
         );
