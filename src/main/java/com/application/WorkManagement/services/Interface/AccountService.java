@@ -6,6 +6,7 @@ import com.application.WorkManagement.dto.requests.RegisterRequest;
 import com.application.WorkManagement.dto.responses.AccountResponse;
 import com.application.WorkManagement.dto.responses.TokenResponse;
 import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
+import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
 import com.application.WorkManagement.exceptions.custom.EmptyImageException;
 import com.application.WorkManagement.exceptions.custom.InvalidFileExtensionException;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,10 +20,10 @@ public interface AccountService {
 
     TokenResponse createToken(LoginRequest loginRequest);
 
-    AccountResponse readAccount(String email);
+    AccountResponse readAccount(String uuid) throws DataNotFoundException;
 
-    AccountResponse updateProfileAccount(String email, ProfileRequest profile);
+    AccountResponse updateProfileAccount(String uuid, ProfileRequest profile) throws DataNotFoundException;
 
-    AccountResponse updateAvatarAccount(String email, MultipartFile file) throws URISyntaxException, InvalidFileExtensionException, IOException, EmptyImageException;
+    AccountResponse updateAvatarAccount(String uuid, MultipartFile file) throws URISyntaxException, InvalidFileExtensionException, IOException, EmptyImageException, DataNotFoundException;
 
 }

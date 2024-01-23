@@ -37,26 +37,23 @@ public class UploadImageServiceImpl implements UploadImageService {
     }
 
     @Override
-    @Transactional(rollbackFor = {IOException.class, URISyntaxException.class})
-    public URI uploadImageToS3(MultipartFile file) throws EmptyImageException, InvalidFileExtensionException, URISyntaxException, IOException {
+    public URI uploadImageToS3(
+            UUID uuid,
+            MultipartFile file
+    ) throws EmptyImageException, InvalidFileExtensionException, URISyntaxException, IOException {
+        if (!ImageType.PNG.toString().equals(file.getContentType())
+                &&
+            !ImageType.JPEG.toString().equals(file.getContentType()))
+        {
+            throw new InvalidFileExtensionException("Định dạng hình ảnh không hợp lệ");
+        }
         if (file.isEmpty()){
             throw new EmptyImageException("Không có dữ liệu hình ảnh");
         }
-        String contentType = file.getContentType();;
-        if (!ImageType.PNG.toString().equals(contentType) && !ImageType.JPEG.toString().equals(contentType)){
-            throw new InvalidFileExtensionException("Định dạng hình ảnh không hợp lệ");
-        }
-        Avatar avatar = avatarRepository.save(
-                Avatar.builder()
-                        .originalFileName(file.getOriginalFilename())
-                        .contentType(contentType)
-                        .size(file.getSize())
-                        .build()
-        );
         File object = convertMultiPartFileToFile(file);
-        String fileName = getFileName(avatar.getUuid(), file.getOriginalFilename());
+        String fileName = getFileName(uuid, file.getOriginalFilename());
         s3Client.putObject(new PutObjectRequest(bucketName, fileName, object));
-        boolean isDeleted = object.delete();
+        Boolean isDeleted = object.delete();
         return s3Client.getUrl(bucketName, fileName).toURI();
     }
 

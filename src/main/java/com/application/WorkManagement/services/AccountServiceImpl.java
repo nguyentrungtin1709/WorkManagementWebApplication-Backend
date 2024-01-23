@@ -7,11 +7,14 @@ import com.application.WorkManagement.dto.requests.RegisterRequest;
 import com.application.WorkManagement.dto.responses.AccountResponse;
 import com.application.WorkManagement.dto.responses.TokenResponse;
 import com.application.WorkManagement.entities.Account;
+import com.application.WorkManagement.entities.Avatar;
 import com.application.WorkManagement.enums.UserRole;
 import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
+import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
 import com.application.WorkManagement.exceptions.custom.EmptyImageException;
 import com.application.WorkManagement.exceptions.custom.InvalidFileExtensionException;
 import com.application.WorkManagement.repositories.AccountRepository;
+import com.application.WorkManagement.repositories.AvatarRepository;
 import com.application.WorkManagement.services.Interface.AccountService;
 import com.application.WorkManagement.services.Interface.UploadImageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +23,7 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -27,6 +31,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.UUID;
 
 @Service
 public class AccountServiceImpl implements AccountService {
@@ -43,13 +48,15 @@ public class AccountServiceImpl implements AccountService {
 
     private final UploadImageService uploadImageService;
 
+    private final AvatarRepository avatarRepository;
+
     @Autowired
     public AccountServiceImpl(
             AccountRepository accountRepository,
             PasswordEncoder passwordEncoder,
             DaoAuthenticationProvider daoAuthenticationProvider,
             AccountMapper accountMapper,
-            JsonWebTokenService jsonWebTokenService, UploadImageService uploadImageService
+            JsonWebTokenService jsonWebTokenService, UploadImageService uploadImageService, AvatarRepository avatarRepository
     ) {
         this.accountRepository = accountRepository;
         this.passwordEncoder = passwordEncoder;
@@ -57,6 +64,7 @@ public class AccountServiceImpl implements AccountService {
         this.accountMapper = accountMapper;
         this.jsonWebTokenService = jsonWebTokenService;
         this.uploadImageService = uploadImageService;
+        this.avatarRepository = avatarRepository;
     }
 
     @Override
@@ -98,19 +106,19 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public AccountResponse readAccount(String email){
+    public AccountResponse readAccount(String uuid) throws DataNotFoundException {
         return accountMapper.apply(
                 accountRepository
-                    .findAccountByEmail(email)
-                    .orElseThrow(() -> new UsernameNotFoundException("Email không được đăng ký"))
+                    .findById(UUID.fromString(uuid))
+                    .orElseThrow(() -> new DataNotFoundException("Không tìm thấy tài khoản"))
         );
     }
 
     @Override
-    public AccountResponse updateProfileAccount(String email, ProfileRequest profile) {
+    public AccountResponse updateProfileAccount(String uuid, ProfileRequest profile) throws DataNotFoundException {
         Account account = accountRepository
-                .findAccountByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Email không được đăng ký"));
+                .findById(UUID.fromString(uuid))
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy tài khoản"));
         if (!account.getName().equals(profile.getName())){
             account.setName(profile.getName());
         }
@@ -129,19 +137,32 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional(rollbackFor = {
+            IOException.class,
+            URISyntaxException.class,
+            InvalidFileExtensionException.class,
+            EmptyImageException.class
+    })
     public AccountResponse updateAvatarAccount(
-            String email,
+            String uuid,
             MultipartFile file
-    ) throws URISyntaxException, InvalidFileExtensionException, IOException, EmptyImageException {
+    ) throws URISyntaxException, InvalidFileExtensionException, IOException, EmptyImageException, DataNotFoundException {
         Account account = accountRepository
-                .findAccountByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Email không được đăng ký"));
+                .findById(UUID.fromString(uuid))
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy tài khoản"));
         if (account.getAvatar() != null){
             String path = account.getAvatar().getPath();
             String fileName = path.substring(path.lastIndexOf("/") + 1);
             uploadImageService.removeFileFromS3(fileName);
         }
-        URI avatarURI = uploadImageService.uploadImageToS3(file);
+        Avatar avatar = avatarRepository.save(
+                Avatar.builder()
+                        .originalFileName(file.getOriginalFilename())
+                        .contentType(file.getContentType())
+                        .size(file.getSize())
+                        .build()
+        );
+        URI avatarURI = uploadImageService.uploadImageToS3(avatar.getUuid(), file);
         account.setAvatar(avatarURI);
         return accountMapper.apply(
                 accountRepository.save(account)

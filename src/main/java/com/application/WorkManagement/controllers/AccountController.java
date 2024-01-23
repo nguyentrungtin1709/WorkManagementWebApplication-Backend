@@ -2,6 +2,7 @@ package com.application.WorkManagement.controllers;
 
 import com.application.WorkManagement.dto.requests.ProfileRequest;
 import com.application.WorkManagement.dto.responses.AccountResponse;
+import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
 import com.application.WorkManagement.exceptions.custom.EmptyImageException;
 import com.application.WorkManagement.exceptions.custom.InvalidFileExtensionException;
 import com.application.WorkManagement.services.Interface.AccountService;
@@ -32,7 +33,7 @@ public class AccountController {
     @GetMapping
     private ResponseEntity<AccountResponse> readAccount(
             JwtAuthenticationToken authentication
-    ){
+    ) throws DataNotFoundException {
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.APPLICATION_JSON)
@@ -46,12 +47,15 @@ public class AccountController {
             JwtAuthenticationToken authentication,
             @Valid @RequestBody
             ProfileRequest profileRequest
-    ){
+    ) throws DataNotFoundException {
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(
-                        accountService.updateProfileAccount(authentication.getName(), profileRequest)
+                    accountService.updateProfileAccount(
+                            authentication.getName(),
+                            profileRequest
+                    )
                 );
     }
 
@@ -59,7 +63,8 @@ public class AccountController {
     private ResponseEntity<AccountResponse> updateImageAccount(
             JwtAuthenticationToken authentication,
             @RequestParam("image") MultipartFile multipartFile
-    ) throws InvalidFileExtensionException, URISyntaxException, IOException, EmptyImageException {
+    ) throws InvalidFileExtensionException, URISyntaxException, IOException, EmptyImageException, DataNotFoundException
+    {
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.APPLICATION_JSON)
@@ -67,7 +72,7 @@ public class AccountController {
                     accountService.updateAvatarAccount(
                                 authentication.getName(),
                                 multipartFile
-                            )
+                    )
                 );
     }
 }

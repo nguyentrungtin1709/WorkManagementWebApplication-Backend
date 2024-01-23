@@ -7,9 +7,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.UUID;
 
 public interface UploadImageService {
-    URI uploadImageToS3(MultipartFile file) throws EmptyImageException, InvalidFileExtensionException, URISyntaxException, IOException;
+    URI uploadImageToS3(UUID uuid, MultipartFile file) throws EmptyImageException, InvalidFileExtensionException, URISyntaxException, IOException;
 
     void removeFileFromS3(String fileName) throws URISyntaxException;
 }

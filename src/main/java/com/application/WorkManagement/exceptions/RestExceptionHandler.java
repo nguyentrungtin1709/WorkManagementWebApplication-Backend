@@ -2,6 +2,7 @@ package com.application.WorkManagement.exceptions;
 
 import com.application.WorkManagement.dto.responses.ExceptionResponse;
 import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
+import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
 import com.application.WorkManagement.exceptions.custom.EmptyImageException;
 import com.application.WorkManagement.exceptions.custom.InvalidFileExtensionException;
 import org.springframework.http.MediaType;
@@ -57,6 +58,16 @@ public class RestExceptionHandler {
 
     @ExceptionHandler(InvalidFileExtensionException.class)
     public ResponseEntity<ExceptionResponse> invalidFileExtensionException(InvalidFileExtensionException exception){
+        return ResponseEntity
+                .badRequest()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        new ExceptionResponse(exception.getMessage())
+                );
+    }
+
+    @ExceptionHandler(DataNotFoundException.class)
+    public ResponseEntity<ExceptionResponse> dataNotFoundException(DataNotFoundException exception){
         return ResponseEntity
                 .badRequest()
                 .contentType(MediaType.APPLICATION_JSON)

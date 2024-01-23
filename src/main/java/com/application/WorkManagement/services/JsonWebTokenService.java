@@ -34,7 +34,7 @@ public class JsonWebTokenService {
                 .issuer("work-management-web-application")
                 .issuedAt(now)
                 .expiresAt(now.plus(30, ChronoUnit.DAYS))
-                .subject(account.getEmail())
+                .subject(account.getUuid().toString())
                 .claim("scope", scope)
                 .build();
         return jwtEncoder
