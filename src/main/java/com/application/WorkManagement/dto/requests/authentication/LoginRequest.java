@@ -1,4 +1,4 @@
-package com.application.WorkManagement.dto.requests;
+package com.application.WorkManagement.dto.requests.authentication;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

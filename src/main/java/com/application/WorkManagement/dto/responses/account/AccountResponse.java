@@ -1,4 +1,4 @@
-package com.application.WorkManagement.dto.responses;
+package com.application.WorkManagement.dto.responses.account;
 
 import com.application.WorkManagement.enums.UserRole;
 import lombok.*;

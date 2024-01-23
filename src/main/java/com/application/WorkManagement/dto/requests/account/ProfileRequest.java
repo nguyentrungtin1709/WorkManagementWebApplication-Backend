@@ -1,4 +1,4 @@
-package com.application.WorkManagement.dto.requests;
+package com.application.WorkManagement.dto.requests.account;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;

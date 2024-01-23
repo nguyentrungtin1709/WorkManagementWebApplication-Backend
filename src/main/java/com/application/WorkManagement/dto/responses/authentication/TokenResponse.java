@@ -1,4 +1,4 @@
-package com.application.WorkManagement.dto.responses;
+package com.application.WorkManagement.dto.responses.authentication;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

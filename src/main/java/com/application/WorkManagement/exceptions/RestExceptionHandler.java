@@ -1,10 +1,7 @@
 package com.application.WorkManagement.exceptions;
 
 import com.application.WorkManagement.dto.responses.ExceptionResponse;
-import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
-import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
-import com.application.WorkManagement.exceptions.custom.EmptyImageException;
-import com.application.WorkManagement.exceptions.custom.InvalidFileExtensionException;
+import com.application.WorkManagement.exceptions.custom.*;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -72,7 +69,17 @@ public class RestExceptionHandler {
                 .badRequest()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(
-                        new ExceptionResponse(exception.getMessage())
+                    new ExceptionResponse(exception.getMessage())
+                );
+    }
+
+    @ExceptionHandler(PasswordException.class)
+    public ResponseEntity<ExceptionResponse> passwordException(PasswordException exception){
+        return ResponseEntity
+                .badRequest()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                    new ExceptionResponse(exception.getMessage())
                 );
     }
 

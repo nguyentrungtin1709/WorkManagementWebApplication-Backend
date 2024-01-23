@@ -1,6 +1,6 @@
 package com.application.WorkManagement.dto.mappers;
 
-import com.application.WorkManagement.dto.responses.AccountResponse;
+import com.application.WorkManagement.dto.responses.account.AccountResponse;
 import com.application.WorkManagement.entities.Account;
 import org.springframework.stereotype.Service;
 

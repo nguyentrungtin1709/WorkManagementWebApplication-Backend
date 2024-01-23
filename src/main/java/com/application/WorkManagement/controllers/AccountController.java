@@ -1,14 +1,15 @@
 package com.application.WorkManagement.controllers;
 
-import com.application.WorkManagement.dto.requests.ProfileRequest;
-import com.application.WorkManagement.dto.responses.AccountResponse;
-import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
-import com.application.WorkManagement.exceptions.custom.EmptyImageException;
-import com.application.WorkManagement.exceptions.custom.InvalidFileExtensionException;
+import com.application.WorkManagement.dto.requests.account.EmailRequest;
+import com.application.WorkManagement.dto.requests.account.PasswordRequest;
+import com.application.WorkManagement.dto.requests.account.ProfileRequest;
+import com.application.WorkManagement.dto.responses.account.AccountResponse;
+import com.application.WorkManagement.dto.responses.account.EmailCheckResponse;
+import com.application.WorkManagement.exceptions.custom.*;
 import com.application.WorkManagement.services.Interface.AccountService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -17,7 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/account")
@@ -31,7 +31,7 @@ public class AccountController {
     }
 
     @GetMapping
-    private ResponseEntity<AccountResponse> readAccount(
+    public ResponseEntity<AccountResponse> readAccount(
             JwtAuthenticationToken authentication
     ) throws DataNotFoundException {
         return ResponseEntity
@@ -43,7 +43,7 @@ public class AccountController {
     }
 
     @PatchMapping
-    private ResponseEntity<AccountResponse> updateProfileAccount(
+    public ResponseEntity<AccountResponse> updateProfileAccount(
             JwtAuthenticationToken authentication,
             @Valid @RequestBody
             ProfileRequest profileRequest
@@ -60,7 +60,7 @@ public class AccountController {
     }
 
     @PatchMapping("/avatar")
-    private ResponseEntity<AccountResponse> updateImageAccount(
+    public ResponseEntity<AccountResponse> updateImageAccount(
             JwtAuthenticationToken authentication,
             @RequestParam("image") MultipartFile multipartFile
     ) throws InvalidFileExtensionException, URISyntaxException, IOException, EmptyImageException, DataNotFoundException
@@ -73,6 +73,50 @@ public class AccountController {
                                 authentication.getName(),
                                 multipartFile
                     )
+                );
+    }
+
+    @PatchMapping("/email")
+    public ResponseEntity<AccountResponse> updateEmailAccount(
+            JwtAuthenticationToken authentication,
+            @Valid @RequestBody
+            EmailRequest emailRequest
+    ) throws DataNotFoundException, CustomDuplicateException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        accountService.updateEmailAccount(
+                                authentication.getName(),
+                                emailRequest
+                        )
+                );
+    }
+
+    @PatchMapping("/password")
+    public ResponseEntity<Void> updatePasswordAccount(
+            JwtAuthenticationToken authentication,
+            @Valid @RequestBody
+            PasswordRequest passwordRequest
+    ) throws DataNotFoundException, PasswordException {
+        accountService.updatePasswordAccount(
+                authentication.getName(),
+                passwordRequest
+        );
+        return ResponseEntity
+                .noContent()
+                .build();
+    }
+
+    @PatchMapping("/notification")
+    public ResponseEntity<AccountResponse> updateNotificationAccount(
+            JwtAuthenticationToken authentication
+    ) throws DataNotFoundException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                    accountService.updateNotificationAccount(authentication.getName())
                 );
     }
 }

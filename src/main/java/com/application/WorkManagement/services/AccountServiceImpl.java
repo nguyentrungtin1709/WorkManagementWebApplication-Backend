@@ -1,23 +1,24 @@
 package com.application.WorkManagement.services;
 
 import com.application.WorkManagement.dto.mappers.AccountMapper;
-import com.application.WorkManagement.dto.requests.LoginRequest;
-import com.application.WorkManagement.dto.requests.ProfileRequest;
-import com.application.WorkManagement.dto.requests.RegisterRequest;
-import com.application.WorkManagement.dto.responses.AccountResponse;
-import com.application.WorkManagement.dto.responses.TokenResponse;
+import com.application.WorkManagement.dto.requests.account.EmailRequest;
+import com.application.WorkManagement.dto.requests.account.PasswordRequest;
+import com.application.WorkManagement.dto.requests.authentication.LoginRequest;
+import com.application.WorkManagement.dto.requests.account.ProfileRequest;
+import com.application.WorkManagement.dto.requests.authentication.RegisterRequest;
+import com.application.WorkManagement.dto.responses.account.AccountResponse;
+import com.application.WorkManagement.dto.responses.account.EmailCheckResponse;
+import com.application.WorkManagement.dto.responses.authentication.TokenResponse;
 import com.application.WorkManagement.entities.Account;
 import com.application.WorkManagement.entities.Avatar;
 import com.application.WorkManagement.enums.UserRole;
-import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
-import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
-import com.application.WorkManagement.exceptions.custom.EmptyImageException;
-import com.application.WorkManagement.exceptions.custom.InvalidFileExtensionException;
+import com.application.WorkManagement.exceptions.custom.*;
 import com.application.WorkManagement.repositories.AccountRepository;
 import com.application.WorkManagement.repositories.AvatarRepository;
 import com.application.WorkManagement.services.Interface.AccountService;
 import com.application.WorkManagement.services.Interface.UploadImageService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -108,17 +109,13 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public AccountResponse readAccount(String uuid) throws DataNotFoundException {
         return accountMapper.apply(
-                accountRepository
-                    .findById(UUID.fromString(uuid))
-                    .orElseThrow(() -> new DataNotFoundException("Không tìm thấy tài khoản"))
+                getAccountFromAuthenticationName(uuid)
         );
     }
 
     @Override
     public AccountResponse updateProfileAccount(String uuid, ProfileRequest profile) throws DataNotFoundException {
-        Account account = accountRepository
-                .findById(UUID.fromString(uuid))
-                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy tài khoản"));
+        Account account = getAccountFromAuthenticationName(uuid);
         if (!account.getName().equals(profile.getName())){
             account.setName(profile.getName());
         }
@@ -147,9 +144,7 @@ public class AccountServiceImpl implements AccountService {
             String uuid,
             MultipartFile file
     ) throws URISyntaxException, InvalidFileExtensionException, IOException, EmptyImageException, DataNotFoundException {
-        Account account = accountRepository
-                .findById(UUID.fromString(uuid))
-                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy tài khoản"));
+        Account account = getAccountFromAuthenticationName(uuid);
         if (account.getAvatar() != null){
             String path = account.getAvatar().getPath();
             String fileName = path.substring(path.lastIndexOf("/") + 1);
@@ -169,7 +164,76 @@ public class AccountServiceImpl implements AccountService {
         );
     }
 
-    public Boolean checkUpdateOptionAttribute(String origin, String other){
+    @Override
+    public EmailCheckResponse checkExistEmail(EmailRequest emailRequest) {
+        Boolean exist = accountRepository
+                .existsAccountByEmail(
+                        emailRequest.getEmail()
+                );
+        if (exist){
+            return EmailCheckResponse
+                    .builder()
+                    .exist(exist)
+                    .status(HttpStatus.BAD_REQUEST)
+                    .email("Email đã được dăng ký")
+                    .build();
+        }
+        return EmailCheckResponse
+                .builder()
+                .exist(exist)
+                .status(HttpStatus.OK)
+                .email("Email chưa được đăng ký")
+                .build();
+    }
+
+    @Override
+    public AccountResponse updateEmailAccount(String uuid, EmailRequest emailRequest) throws CustomDuplicateException, DataNotFoundException {
+        if (
+            accountRepository.existsAccountByEmail(emailRequest.getEmail())
+        ){
+            throw new CustomDuplicateException("Email đã được đăng ký");
+        }
+        Account account = getAccountFromAuthenticationName(uuid);
+        account.setEmail(emailRequest.getEmail());
+        return accountMapper.apply(
+                accountRepository.save(account)
+        );
+    }
+
+    @Override
+    public void updatePasswordAccount(String uuid, PasswordRequest request) throws DataNotFoundException, PasswordException {
+        if (!request.getPassword().equals(request.getConfirm())){
+            throw new PasswordException("Mật khẩu nhập lại không khớp");
+        }
+        Account account = getAccountFromAuthenticationName(uuid);
+        daoAuthenticationProvider.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        account.getEmail(),
+                        request.getCurrent()
+                    )
+        );
+        account.setPassword(
+                passwordEncoder.encode(request.getPassword())
+        );
+        accountRepository.save(account);
+    }
+
+    @Override
+    public AccountResponse updateNotificationAccount(String uuid) throws DataNotFoundException {
+        Account account = getAccountFromAuthenticationName(uuid);
+        account.setNotification(LocalDateTime.now());
+        return accountMapper.apply(
+                accountRepository.save(account)
+        );
+    }
+
+    private Account getAccountFromAuthenticationName(String uuid) throws DataNotFoundException {
+        return accountRepository
+                .findById(UUID.fromString(uuid))
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy tài khoản"));
+    }
+
+    private Boolean checkUpdateOptionAttribute(String origin, String other){
         return Objects.nonNull(other) && !other.equals(origin);
     }
 }
