@@ -12,7 +12,7 @@ public class AccountMapper implements Function<Account, AccountResponse> {
     public AccountResponse apply(Account account) {
         return AccountResponse
                 .builder()
-                .uuid(account.getUuid())
+                .id(account.getUuid())
                 .name(account.getName())
                 .email(account.getEmail())
                 .avatar(account.getAvatar())

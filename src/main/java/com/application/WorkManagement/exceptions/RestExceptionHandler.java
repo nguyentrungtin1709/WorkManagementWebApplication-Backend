@@ -2,6 +2,7 @@ package com.application.WorkManagement.exceptions;
 
 import com.application.WorkManagement.dto.responses.ExceptionResponse;
 import com.application.WorkManagement.exceptions.custom.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -77,6 +78,16 @@ public class RestExceptionHandler {
     public ResponseEntity<ExceptionResponse> passwordException(PasswordException exception){
         return ResponseEntity
                 .badRequest()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                    new ExceptionResponse(exception.getMessage())
+                );
+    }
+
+    @ExceptionHandler(CustomAccessDeniedException.class)
+    public ResponseEntity<ExceptionResponse> customAccessDeniedException(CustomAccessDeniedException exception){
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(
                     new ExceptionResponse(exception.getMessage())

@@ -14,7 +14,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class AccountResponse {
 
-    private UUID uuid;
+    private UUID id;
 
     private String name;
 
