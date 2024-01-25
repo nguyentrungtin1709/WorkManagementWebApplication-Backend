@@ -1,8 +1,11 @@
 package com.application.WorkManagement.controllers.user;
 
+import com.application.WorkManagement.dto.requests.workspace.MemberRequest;
 import com.application.WorkManagement.dto.requests.workspace.WorkspaceRequest;
+import com.application.WorkManagement.dto.responses.workspace.MemberResponse;
 import com.application.WorkManagement.dto.responses.workspace.WorkspaceResponse;
 import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
+import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
 import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
 import com.application.WorkManagement.services.Interface.WorkspaceService;
 import jakarta.validation.Valid;
@@ -104,5 +107,24 @@ public class WorkspaceController {
         return ResponseEntity
                 .noContent()
                 .build();
+    }
+
+    @PostMapping("/{workspaceId}/members")
+    public ResponseEntity<MemberResponse> addMemberFromEmail(
+            JwtAuthenticationToken authentication,
+            @PathVariable("workspaceId") UUID workspaceId,
+            @Valid @RequestBody
+            MemberRequest request
+    ) throws DataNotFoundException, CustomDuplicateException, CustomAccessDeniedException {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                    workspaceService.addMemberFromEmail(
+                            authentication.getName(),
+                            workspaceId,
+                            request
+                    )
+                );
     }
 }
