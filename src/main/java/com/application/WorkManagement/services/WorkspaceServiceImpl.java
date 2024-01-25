@@ -1,13 +1,17 @@
 package com.application.WorkManagement.services;
 
-import com.application.WorkManagement.dto.mappers.WorkspaceMapper;
-import com.application.WorkManagement.dto.mappers.WorkspaceMemberMapper;
+import com.application.WorkManagement.dto.mappers.workspace.InviteCodeMapper;
+import com.application.WorkManagement.dto.mappers.workspace.WorkspaceMapper;
+import com.application.WorkManagement.dto.mappers.workspace.WorkspaceMemberMapper;
+import com.application.WorkManagement.dto.requests.workspace.InviteCodeRequest;
 import com.application.WorkManagement.dto.requests.workspace.MemberRequest;
 import com.application.WorkManagement.dto.requests.workspace.WorkspaceRequest;
+import com.application.WorkManagement.dto.responses.workspace.InviteCodeResponse;
 import com.application.WorkManagement.dto.responses.workspace.MemberResponse;
 import com.application.WorkManagement.dto.responses.workspace.WorkspaceResponse;
 import com.application.WorkManagement.entities.Account;
 import com.application.WorkManagement.entities.Workspace;
+import com.application.WorkManagement.entities.WorkspaceInviteCode;
 import com.application.WorkManagement.entities.WorkspaceMember;
 import com.application.WorkManagement.enums.WorkspaceRole;
 import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
@@ -41,13 +45,17 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
     private final WorkspaceMemberMapper workspaceMemberMapper;
 
+    private final InviteCodeMapper inviteCodeMapper;
+
     @Autowired
     public WorkspaceServiceImpl(
             AccountRepository accountRepository,
             WorkspaceRepository workspaceRepository,
             WorkspaceMemberRepository workspaceMemberRepository,
             WorkspaceInviteCodeRepository workspaceInviteCodeRepository,
-            WorkspaceMapper workspaceMapper, WorkspaceMemberMapper workspaceMemberMapper
+            WorkspaceMapper workspaceMapper,
+            WorkspaceMemberMapper workspaceMemberMapper,
+            InviteCodeMapper inviteCodeMapper
     ) {
         this.accountRepository = accountRepository;
         this.workspaceRepository = workspaceRepository;
@@ -55,6 +63,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         this.workspaceInviteCodeRepository = workspaceInviteCodeRepository;
         this.workspaceMapper = workspaceMapper;
         this.workspaceMemberMapper = workspaceMemberMapper;
+        this.inviteCodeMapper = inviteCodeMapper;
     }
 
     @Override
@@ -167,6 +176,33 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         );
         return workspaceMemberMapper
                 .apply(workspaceMember);
+    }
+
+    @Override
+    public InviteCodeResponse createInviteCodeToJoinInWorkspace(
+            String accountId,
+            UUID workspaceId,
+            InviteCodeRequest request
+    ) throws DataNotFoundException, CustomAccessDeniedException, CustomDuplicateException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Workspace workspace = getWorkspaceFromId(workspaceId);
+        checkAdminPermissionInWorkspace(account, workspace);
+        if (
+            workspaceInviteCodeRepository.existsByAccountAndWorkspace(account, workspace)
+        ){
+            throw new CustomDuplicateException("Tài khoản đã tạo mã mời");
+        }
+        return inviteCodeMapper.apply(
+                workspaceInviteCodeRepository.save(
+                        WorkspaceInviteCode
+                                .builder()
+                                .account(account)
+                                .workspace(workspace)
+                                .workspaceRole(request.getRole())
+                                .inviteCode(UUID.randomUUID())
+                                .build()
+                )
+        );
     }
 
     private Account getAccountFromAuthenticationName(String uuid) throws DataNotFoundException {

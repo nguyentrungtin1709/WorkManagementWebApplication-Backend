@@ -1,4 +1,4 @@
-package com.application.WorkManagement.dto.mappers;
+package com.application.WorkManagement.dto.mappers.workspace;
 
 import com.application.WorkManagement.dto.responses.workspace.WorkspaceResponse;
 import com.application.WorkManagement.entities.WorkspaceMember;

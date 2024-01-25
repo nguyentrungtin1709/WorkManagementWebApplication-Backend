@@ -1,4 +1,4 @@
-package com.application.WorkManagement.dto.mappers;
+package com.application.WorkManagement.dto.mappers.account;
 
 import org.springframework.stereotype.Service;
 

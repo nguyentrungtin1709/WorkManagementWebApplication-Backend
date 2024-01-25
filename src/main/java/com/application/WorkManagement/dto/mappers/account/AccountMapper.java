@@ -1,4 +1,4 @@
-package com.application.WorkManagement.dto.mappers;
+package com.application.WorkManagement.dto.mappers.account;
 
 import com.application.WorkManagement.dto.responses.account.AccountResponse;
 import com.application.WorkManagement.entities.Account;

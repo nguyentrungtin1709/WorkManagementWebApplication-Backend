@@ -67,7 +67,7 @@ public class RestExceptionHandler {
     @ExceptionHandler(DataNotFoundException.class)
     public ResponseEntity<ExceptionResponse> dataNotFoundException(DataNotFoundException exception){
         return ResponseEntity
-                .badRequest()
+                .status(HttpStatus.NOT_FOUND)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(
                     new ExceptionResponse(exception.getMessage())

@@ -1,6 +1,6 @@
 package com.application.WorkManagement.security;
 
-import com.application.WorkManagement.dto.mappers.UserRoleMapper;
+import com.application.WorkManagement.dto.mappers.account.UserRoleMapper;
 import com.application.WorkManagement.enums.UserRole;
 import com.application.WorkManagement.security.key.RSAKeyProperties;
 import com.nimbusds.jose.jwk.JWK;

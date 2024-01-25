@@ -1,6 +1,6 @@
 package com.application.WorkManagement.services;
 
-import com.application.WorkManagement.dto.mappers.AccountMapper;
+import com.application.WorkManagement.dto.mappers.account.AccountMapper;
 import com.application.WorkManagement.dto.requests.account.EmailRequest;
 import com.application.WorkManagement.dto.requests.account.PasswordRequest;
 import com.application.WorkManagement.dto.requests.authentication.LoginRequest;

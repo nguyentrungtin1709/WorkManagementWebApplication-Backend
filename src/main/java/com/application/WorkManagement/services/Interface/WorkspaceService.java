@@ -1,9 +1,12 @@
 package com.application.WorkManagement.services.Interface;
 
+import com.application.WorkManagement.dto.requests.workspace.InviteCodeRequest;
 import com.application.WorkManagement.dto.requests.workspace.MemberRequest;
 import com.application.WorkManagement.dto.requests.workspace.WorkspaceRequest;
+import com.application.WorkManagement.dto.responses.workspace.InviteCodeResponse;
 import com.application.WorkManagement.dto.responses.workspace.MemberResponse;
 import com.application.WorkManagement.dto.responses.workspace.WorkspaceResponse;
+import com.application.WorkManagement.enums.WorkspaceRole;
 import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
 import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
 import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
@@ -24,4 +27,7 @@ public interface WorkspaceService {
     void deleteWorkspaceById(String accountId, UUID workspaceId) throws DataNotFoundException, CustomAccessDeniedException;
 
     MemberResponse addMemberFromEmail(String accountId, UUID workspaceId, MemberRequest request) throws DataNotFoundException, CustomAccessDeniedException, CustomDuplicateException;
+
+    InviteCodeResponse createInviteCodeToJoinInWorkspace(String accountId, UUID workspaceId, InviteCodeRequest request) throws DataNotFoundException, CustomAccessDeniedException, CustomDuplicateException;
+
 }
