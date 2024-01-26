@@ -1,6 +1,7 @@
 package com.application.WorkManagement.services;
 
 import com.application.WorkManagement.dto.mappers.workspace.InviteCodeMapper;
+import com.application.WorkManagement.dto.mappers.workspace.WorkspaceInviteCodeMapper;
 import com.application.WorkManagement.dto.mappers.workspace.WorkspaceMapper;
 import com.application.WorkManagement.dto.mappers.workspace.WorkspaceMemberMapper;
 import com.application.WorkManagement.dto.requests.workspace.InviteCodeRequest;
@@ -24,6 +25,7 @@ import com.application.WorkManagement.repositories.WorkspaceRepository;
 import com.application.WorkManagement.services.Interface.WorkspaceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -47,6 +49,8 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
     private final InviteCodeMapper inviteCodeMapper;
 
+    private final WorkspaceInviteCodeMapper workspaceInviteCodeMapper;
+
     @Autowired
     public WorkspaceServiceImpl(
             AccountRepository accountRepository,
@@ -55,7 +59,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
             WorkspaceInviteCodeRepository workspaceInviteCodeRepository,
             WorkspaceMapper workspaceMapper,
             WorkspaceMemberMapper workspaceMemberMapper,
-            InviteCodeMapper inviteCodeMapper
+            InviteCodeMapper inviteCodeMapper, WorkspaceInviteCodeMapper workspaceInviteCodeMapper
     ) {
         this.accountRepository = accountRepository;
         this.workspaceRepository = workspaceRepository;
@@ -64,6 +68,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         this.workspaceMapper = workspaceMapper;
         this.workspaceMemberMapper = workspaceMemberMapper;
         this.inviteCodeMapper = inviteCodeMapper;
+        this.workspaceInviteCodeMapper = workspaceInviteCodeMapper;
     }
 
     @Override
@@ -205,6 +210,40 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         );
     }
 
+    @Override
+    public InviteCodeResponse readInviteCode(
+            String accountId,
+            UUID workspaceId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Workspace workspace = getWorkspaceFromId(workspaceId);
+        checkAdminPermissionInWorkspace(account, workspace);
+        return inviteCodeMapper.apply(
+                getWorkspaceInviteCodeFromAccountAndWorkspace(account, workspace)
+        );
+    }
+
+    @Override
+    @Transactional
+    public void deleteInviteCode(
+            String accountId,
+            UUID workspaceId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Workspace workspace = getWorkspaceFromId(workspaceId);
+        checkAdminPermissionInWorkspace(account, workspace);
+        workspaceInviteCodeRepository.deleteWorkspaceInviteCodeByAccountAndWorkspace(account, workspace);
+    }
+
+    @Override
+    public WorkspaceResponse checkInviteCode(UUID workspaceId, UUID inviteCode) throws DataNotFoundException {
+        return workspaceInviteCodeMapper.apply(
+                workspaceInviteCodeRepository
+                        .findWorkspaceInviteCodeByWorkspace_UuidAndInviteCode(workspaceId, inviteCode)
+                        .orElseThrow(() -> new DataNotFoundException("Mã mời không tồn tại"))
+        );
+    }
+
     private Account getAccountFromAuthenticationName(String uuid) throws DataNotFoundException {
         return accountRepository
                 .findById(UUID.fromString(uuid))
@@ -215,6 +254,16 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         return workspaceRepository
                 .findById(workspaceId)
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy không gian làm việc"));
+    }
+
+    private WorkspaceInviteCode getWorkspaceInviteCodeFromAccountAndWorkspace(
+            Account account,
+            Workspace workspace
+    ) throws DataNotFoundException {
+        return workspaceInviteCodeRepository
+                .findWorkspaceInviteCodeByAccountAndWorkspace(account, workspace)
+                .orElseThrow(() -> new DataNotFoundException("Mã mời không tồn tại"));
+
     }
 
     private void checkPermissionInWorkspace(

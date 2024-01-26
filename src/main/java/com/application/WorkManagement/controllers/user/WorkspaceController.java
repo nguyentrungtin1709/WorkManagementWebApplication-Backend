@@ -148,4 +148,48 @@ public class WorkspaceController {
                         )
                 );
     }
+
+    @GetMapping("/{workspaceId}/invitations")
+    public ResponseEntity<InviteCodeResponse> readInviteCode(
+            JwtAuthenticationToken authentication,
+            @PathVariable("workspaceId") UUID workspaceId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        workspaceService.readInviteCode(
+                                authentication.getName(),
+                                workspaceId
+                        )
+                );
+    }
+
+    @DeleteMapping("/{workspaceId}/invitations")
+    public ResponseEntity<Void> deleteInviteCode(
+            JwtAuthenticationToken authentication,
+            @PathVariable("workspaceId") UUID workspaceId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        workspaceService.deleteInviteCode(authentication.getName(), workspaceId);
+        return ResponseEntity
+                .noContent()
+                .build();
+    }
+
+    @GetMapping("/{workspaceId}/invitations/{inviteCode}")
+    public ResponseEntity<WorkspaceResponse> checkInviteCode(
+            @PathVariable("workspaceId") UUID workspaceId,
+            @PathVariable("inviteCode") UUID inviteCode
+    ) throws DataNotFoundException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        workspaceService.checkInviteCode(
+                                workspaceId,
+                                inviteCode
+                        )
+                );
+    }
+
 }

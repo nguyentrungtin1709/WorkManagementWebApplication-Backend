@@ -30,4 +30,10 @@ public interface WorkspaceService {
 
     InviteCodeResponse createInviteCodeToJoinInWorkspace(String accountId, UUID workspaceId, InviteCodeRequest request) throws DataNotFoundException, CustomAccessDeniedException, CustomDuplicateException;
 
+    InviteCodeResponse readInviteCode(String accountId, UUID workspaceId) throws DataNotFoundException, CustomAccessDeniedException;
+
+    void deleteInviteCode(String accountId, UUID workspaceId) throws DataNotFoundException, CustomAccessDeniedException;
+
+    WorkspaceResponse checkInviteCode(UUID workspaceId, UUID inviteCode) throws DataNotFoundException;
+
 }
