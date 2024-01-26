@@ -7,6 +7,7 @@ import com.application.WorkManagement.dto.responses.account.AccountResponse;
 import com.application.WorkManagement.dto.responses.account.EmailCheckResponse;
 import com.application.WorkManagement.exceptions.custom.*;
 import com.application.WorkManagement.services.Interface.AccountService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,9 @@ import java.net.URISyntaxException;
 
 @RestController
 @RequestMapping("/api/v1/account")
+@SecurityRequirement(
+        name = "JWT-BEARER"
+)
 public class AccountController {
 
     private final AccountService accountService;

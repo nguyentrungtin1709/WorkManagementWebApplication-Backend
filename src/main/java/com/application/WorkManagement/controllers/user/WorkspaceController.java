@@ -11,6 +11,7 @@ import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedExcept
 import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
 import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
 import com.application.WorkManagement.services.Interface.WorkspaceService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,9 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/workspaces")
+@SecurityRequirement(
+        name = "JWT-BEARER"
+)
 public class WorkspaceController {
 
     private final WorkspaceService workspaceService;
@@ -213,7 +217,8 @@ public class WorkspaceController {
     @GetMapping("/{workspaceId}/members")
     public ResponseEntity<List<MemberResponse>> readMemberListOfWorkspace(
             JwtAuthenticationToken authentication,
-            @PathVariable("workspaceId") UUID workspaceId
+            @PathVariable("workspaceId") UUID workspaceId,
+            @RequestParam(name = "keyword", required = false) String keyword
     ) throws DataNotFoundException, CustomAccessDeniedException {
         return ResponseEntity
                 .ok()
@@ -221,9 +226,41 @@ public class WorkspaceController {
                 .body(
                         workspaceService.readMemberListOfWorkspace(
                                 authentication.getName(),
-                                workspaceId
+                                workspaceId,
+                                keyword
                         )
                 );
     }
 
+    @PatchMapping("/{workspaceId}/members/{memberId}")
+    public ResponseEntity<MemberResponse> updateRoleOfMemberInWorkspace(
+        JwtAuthenticationToken authentication,
+        @PathVariable("workspaceId") UUID workspaceId,
+        @PathVariable("memberId") UUID memberId,
+        @Valid @RequestBody InviteCodeRequest request
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        workspaceService.updateRoleOfMemberInWorkspace(
+                                authentication.getName(),
+                                memberId,
+                                workspaceId,
+                                request
+                        )
+                );
+    }
+
+    @DeleteMapping("/{workspaceId}/members/{memberId}")
+    public ResponseEntity<Void> deleteMemberInWorkspace(
+            JwtAuthenticationToken authentication,
+            @PathVariable("workspaceId") UUID workspaceId,
+            @PathVariable("memberId") UUID memberId
+    ){
+//        Cần fix
+        return ResponseEntity
+                .noContent()
+                .build();
+    }
 }

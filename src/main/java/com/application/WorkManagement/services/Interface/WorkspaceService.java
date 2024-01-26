@@ -38,6 +38,10 @@ public interface WorkspaceService {
 
     WorkspaceResponse joinInWorkspaceFromInviteCode(String accountId, UUID workspaceId, UUID inviteCode) throws DataNotFoundException, CustomDuplicateException;
 
-    List<MemberResponse> readMemberListOfWorkspace(String accountId, UUID workspaceId) throws DataNotFoundException, CustomAccessDeniedException;
+    List<MemberResponse> readMemberListOfWorkspace(String accountId, UUID workspaceId, String keyword) throws DataNotFoundException, CustomAccessDeniedException;
+
+    MemberResponse updateRoleOfMemberInWorkspace(String accountId, UUID memberId, UUID workspaceId, InviteCodeRequest request) throws DataNotFoundException, CustomAccessDeniedException;
+
+    void deleteMemberInWorkspace(String accountId, UUID workspaceId, UUID memberId) throws DataNotFoundException, CustomAccessDeniedException;
 
 }

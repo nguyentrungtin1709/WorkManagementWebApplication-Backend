@@ -275,7 +275,8 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     @Override
     public List<MemberResponse> readMemberListOfWorkspace(
             String accountId,
-            UUID workspaceId
+            UUID workspaceId,
+            String keyword
     ) throws DataNotFoundException, CustomAccessDeniedException {
         Account account = getAccountFromAuthenticationName(accountId);
         Workspace workspace = getWorkspaceFromId(workspaceId);
@@ -284,11 +285,46 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                 workspace,
                 List.of(WorkspaceRole.OBSERVER, WorkspaceRole.MEMBER, WorkspaceRole.ADMIN)
         );
+        if (keyword == null){
+            return workspaceMemberRepository
+                    .readWorkspaceMembersByWorkspaceOrderByWorkspaceRoleDesc(workspace)
+                    .stream()
+                    .map(workspaceMemberMapper)
+                    .collect(Collectors.toList());
+        }
         return workspaceMemberRepository
-                .readWorkspaceMembersByWorkspace(workspace)
+                .readWorkspaceMembersByWorkspace_UuidAndAccount_NameLikeKeywordDESC(workspaceId, keyword)
                 .stream()
                 .map(workspaceMemberMapper)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public MemberResponse updateRoleOfMemberInWorkspace(
+            String accountId,
+            UUID memberId,
+            UUID workspaceId,
+            InviteCodeRequest request
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        Account member = getAccountFromId(memberId);
+        Workspace workspace = getWorkspaceFromId(workspaceId);
+        checkAdminPermissionInWorkspace(
+                getAccountFromAuthenticationName(accountId),
+                workspace
+        );
+        WorkspaceMember workspaceMember = workspaceMemberRepository
+                .readWorkspaceMemberByAccountAndWorkspace(member, workspace)
+                .orElseThrow(() -> new DataNotFoundException("Tài khoản không là thành viên của không gian làm việc"));
+        workspaceMember.setWorkspaceRole(request.getRole());
+        return workspaceMemberMapper.apply(
+                workspaceMemberRepository.save(workspaceMember)
+        );
+    }
+
+    @Override
+    @Transactional
+    public void deleteMemberInWorkspace(String accountId, UUID workspaceId, UUID memberId) throws DataNotFoundException, CustomAccessDeniedException {
+//        Cần fix
     }
 
     private Account getAccountFromAuthenticationName(String uuid) throws DataNotFoundException {
@@ -296,6 +332,13 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                 .findById(UUID.fromString(uuid))
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy tài khoản"));
     }
+
+    private Account getAccountFromId(UUID uuid) throws DataNotFoundException {
+        return accountRepository
+                .findById(uuid)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy tài khoản"));
+    }
+
 
     private Workspace getWorkspaceFromId(UUID workspaceId) throws DataNotFoundException {
         return workspaceRepository
