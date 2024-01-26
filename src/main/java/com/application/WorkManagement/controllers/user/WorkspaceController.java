@@ -192,4 +192,38 @@ public class WorkspaceController {
                 );
     }
 
+    @PostMapping("/{workspaceId}/invitations/{inviteCode}")
+    public ResponseEntity<WorkspaceResponse> joinInWorkspaceFromInviteCode(
+            JwtAuthenticationToken authentication,
+            @PathVariable("workspaceId") UUID workspaceId,
+            @PathVariable("inviteCode") UUID inviteCode
+    ) throws DataNotFoundException, CustomDuplicateException {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        workspaceService.joinInWorkspaceFromInviteCode(
+                                authentication.getName(),
+                                workspaceId,
+                                inviteCode
+                        )
+                );
+    }
+
+    @GetMapping("/{workspaceId}/members")
+    public ResponseEntity<List<MemberResponse>> readMemberListOfWorkspace(
+            JwtAuthenticationToken authentication,
+            @PathVariable("workspaceId") UUID workspaceId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        workspaceService.readMemberListOfWorkspace(
+                                authentication.getName(),
+                                workspaceId
+                        )
+                );
+    }
+
 }

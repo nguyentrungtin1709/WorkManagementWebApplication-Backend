@@ -19,4 +19,6 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
 
     Boolean existsByAccountAndWorkspace(Account account, Workspace workspace);
 
+    List<WorkspaceMember> readWorkspaceMembersByWorkspace(Workspace workspace);
+
 }

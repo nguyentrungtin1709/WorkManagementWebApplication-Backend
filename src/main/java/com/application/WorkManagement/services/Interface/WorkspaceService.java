@@ -36,4 +36,8 @@ public interface WorkspaceService {
 
     WorkspaceResponse checkInviteCode(UUID workspaceId, UUID inviteCode) throws DataNotFoundException;
 
+    WorkspaceResponse joinInWorkspaceFromInviteCode(String accountId, UUID workspaceId, UUID inviteCode) throws DataNotFoundException, CustomDuplicateException;
+
+    List<MemberResponse> readMemberListOfWorkspace(String accountId, UUID workspaceId) throws DataNotFoundException, CustomAccessDeniedException;
+
 }

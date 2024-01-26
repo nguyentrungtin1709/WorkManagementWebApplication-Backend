@@ -244,6 +244,53 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         );
     }
 
+    @Override
+    public WorkspaceResponse joinInWorkspaceFromInviteCode(
+            String accountId,
+            UUID workspaceId,
+            UUID inviteCode
+    ) throws DataNotFoundException, CustomDuplicateException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Workspace workspace = getWorkspaceFromId(workspaceId);
+        WorkspaceInviteCode workspaceInviteCode = workspaceInviteCodeRepository
+                .findWorkspaceInviteCodeByWorkspace_UuidAndInviteCode(workspaceId, inviteCode)
+                .orElseThrow(() -> new DataNotFoundException("Mã mời không tồn tại"));
+        if (
+            workspaceMemberRepository.existsByAccountAndWorkspace(account, workspace)
+        ){
+            throw new CustomDuplicateException("Tài khoản đã là thành viên của không gian làm việc");
+        }
+        WorkspaceMember workspaceMember = workspaceMemberRepository.save(
+                WorkspaceMember
+                        .builder()
+                        .account(account)
+                        .workspace(workspace)
+                        .workspaceRole(workspaceInviteCode.getWorkspaceRole())
+                        .build()
+
+        );
+        return workspaceMapper.apply(workspaceMember);
+    }
+
+    @Override
+    public List<MemberResponse> readMemberListOfWorkspace(
+            String accountId,
+            UUID workspaceId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Workspace workspace = getWorkspaceFromId(workspaceId);
+        checkPermissionInWorkspace(
+                account,
+                workspace,
+                List.of(WorkspaceRole.OBSERVER, WorkspaceRole.MEMBER, WorkspaceRole.ADMIN)
+        );
+        return workspaceMemberRepository
+                .readWorkspaceMembersByWorkspace(workspace)
+                .stream()
+                .map(workspaceMemberMapper)
+                .collect(Collectors.toList());
+    }
+
     private Account getAccountFromAuthenticationName(String uuid) throws DataNotFoundException {
         return accountRepository
                 .findById(UUID.fromString(uuid))
