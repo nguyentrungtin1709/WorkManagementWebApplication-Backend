@@ -10,6 +10,7 @@ import com.application.WorkManagement.enums.WorkspaceRole;
 import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
 import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
 import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
+import com.application.WorkManagement.exceptions.custom.NotExistAdminInWorkspaceException;
 import com.application.WorkManagement.services.Interface.WorkspaceService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -238,7 +239,7 @@ public class WorkspaceController {
         @PathVariable("workspaceId") UUID workspaceId,
         @PathVariable("memberId") UUID memberId,
         @Valid @RequestBody InviteCodeRequest request
-    ) throws DataNotFoundException, CustomAccessDeniedException {
+    ) throws DataNotFoundException, CustomAccessDeniedException, NotExistAdminInWorkspaceException {
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.APPLICATION_JSON)
@@ -257,8 +258,12 @@ public class WorkspaceController {
             JwtAuthenticationToken authentication,
             @PathVariable("workspaceId") UUID workspaceId,
             @PathVariable("memberId") UUID memberId
-    ){
-//        Cần fix
+    ) throws DataNotFoundException, NotExistAdminInWorkspaceException, CustomAccessDeniedException {
+        workspaceService.deleteMemberInWorkspace(
+                authentication.getName(),
+                workspaceId,
+                memberId
+        );
         return ResponseEntity
                 .noContent()
                 .build();

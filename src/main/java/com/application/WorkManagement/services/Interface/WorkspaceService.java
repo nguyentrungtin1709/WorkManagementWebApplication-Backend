@@ -10,6 +10,7 @@ import com.application.WorkManagement.enums.WorkspaceRole;
 import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
 import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
 import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
+import com.application.WorkManagement.exceptions.custom.NotExistAdminInWorkspaceException;
 
 import java.util.List;
 import java.util.UUID;
@@ -40,8 +41,8 @@ public interface WorkspaceService {
 
     List<MemberResponse> readMemberListOfWorkspace(String accountId, UUID workspaceId, String keyword) throws DataNotFoundException, CustomAccessDeniedException;
 
-    MemberResponse updateRoleOfMemberInWorkspace(String accountId, UUID memberId, UUID workspaceId, InviteCodeRequest request) throws DataNotFoundException, CustomAccessDeniedException;
+    MemberResponse updateRoleOfMemberInWorkspace(String accountId, UUID memberId, UUID workspaceId, InviteCodeRequest request) throws DataNotFoundException, CustomAccessDeniedException, NotExistAdminInWorkspaceException;
 
-    void deleteMemberInWorkspace(String accountId, UUID workspaceId, UUID memberId) throws DataNotFoundException, CustomAccessDeniedException;
+    void deleteMemberInWorkspace(String accountId, UUID workspaceId, UUID memberId) throws DataNotFoundException, CustomAccessDeniedException, NotExistAdminInWorkspaceException;
 
 }

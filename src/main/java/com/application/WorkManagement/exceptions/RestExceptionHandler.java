@@ -94,4 +94,16 @@ public class RestExceptionHandler {
                 );
     }
 
+    @ExceptionHandler(NotExistAdminInWorkspaceException.class)
+    public ResponseEntity<ExceptionResponse> notExistAdminInWorkspaceException(
+            NotExistAdminInWorkspaceException exception
+    ){
+        return ResponseEntity
+                .badRequest()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        new ExceptionResponse(exception.getMessage())
+                );
+    }
+
 }

@@ -18,6 +18,7 @@ import com.application.WorkManagement.enums.WorkspaceRole;
 import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
 import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
 import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
+import com.application.WorkManagement.exceptions.custom.NotExistAdminInWorkspaceException;
 import com.application.WorkManagement.repositories.AccountRepository;
 import com.application.WorkManagement.repositories.WorkspaceInviteCodeRepository;
 import com.application.WorkManagement.repositories.WorkspaceMemberRepository;
@@ -280,11 +281,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     ) throws DataNotFoundException, CustomAccessDeniedException {
         Account account = getAccountFromAuthenticationName(accountId);
         Workspace workspace = getWorkspaceFromId(workspaceId);
-        checkPermissionInWorkspace(
-                account,
-                workspace,
-                List.of(WorkspaceRole.OBSERVER, WorkspaceRole.MEMBER, WorkspaceRole.ADMIN)
-        );
+        checkHasAnyPermissionInWorkspace(account, workspace);
         if (keyword == null){
             return workspaceMemberRepository
                     .readWorkspaceMembersByWorkspaceOrderByWorkspaceRoleDesc(workspace)
@@ -300,12 +297,15 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     }
 
     @Override
+    @Transactional(
+            rollbackFor = {NotExistAdminInWorkspaceException.class}
+    )
     public MemberResponse updateRoleOfMemberInWorkspace(
             String accountId,
             UUID memberId,
             UUID workspaceId,
             InviteCodeRequest request
-    ) throws DataNotFoundException, CustomAccessDeniedException {
+    ) throws DataNotFoundException, CustomAccessDeniedException, NotExistAdminInWorkspaceException {
         Account member = getAccountFromId(memberId);
         Workspace workspace = getWorkspaceFromId(workspaceId);
         checkAdminPermissionInWorkspace(
@@ -316,15 +316,55 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                 .readWorkspaceMemberByAccountAndWorkspace(member, workspace)
                 .orElseThrow(() -> new DataNotFoundException("Tài khoản không là thành viên của không gian làm việc"));
         workspaceMember.setWorkspaceRole(request.getRole());
-        return workspaceMemberMapper.apply(
+        MemberResponse response = workspaceMemberMapper.apply(
                 workspaceMemberRepository.save(workspaceMember)
         );
+        checkNotExistAdminInWorkspaceException(workspace);
+        return response;
     }
 
     @Override
-    @Transactional
-    public void deleteMemberInWorkspace(String accountId, UUID workspaceId, UUID memberId) throws DataNotFoundException, CustomAccessDeniedException {
-//        Cần fix
+    @Transactional(
+            rollbackFor = {NotExistAdminInWorkspaceException.class}
+    )
+    public void deleteMemberInWorkspace(
+            String accountId,
+            UUID workspaceId,
+            UUID memberId
+    ) throws DataNotFoundException, CustomAccessDeniedException, NotExistAdminInWorkspaceException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Workspace workspace = getWorkspaceFromId(workspaceId);
+        Account member = getAccountFromId(memberId);
+        if (account.getUuid().equals(member.getUuid())){
+            checkHasAnyPermissionInWorkspace(account, workspace);
+        } else {
+            checkAdminPermissionInWorkspace(account, workspace);
+        }
+        workspaceMemberRepository.deleteWorkspaceMemberByAccount_UuidAndWorkspace_UuidCustom(
+                member.getUuid(),
+                workspace.getUuid()
+        );
+        workspaceMemberRepository.deleteInviteCodeByAccount_UuidAndWorkspace_Uuid(
+                member.getUuid(),
+                workspace.getUuid()
+        );
+        workspaceMemberRepository.deleteTableStarByAccount_UuidAndWorkspace_Uuid(
+                member.getUuid(),
+                workspace.getUuid()
+        );
+        workspaceMemberRepository.deleteTableMemberByAccount_UuidAndWorkspace_Uuid(
+                member.getUuid(),
+                workspace.getUuid()
+        );
+        workspaceMemberRepository.deleteCardMemberByAccount_UuidAndWorkspace_Uuid(
+                member.getUuid(),
+                workspace.getUuid()
+        );
+        workspaceMemberRepository.deleteCardFollowByAccount_UuidAndWorkspace_Uuid(
+                member.getUuid(),
+                workspace.getUuid()
+        );
+        checkNotExistAdminInWorkspaceException(workspace);
     }
 
     private Account getAccountFromAuthenticationName(String uuid) throws DataNotFoundException {
@@ -380,4 +420,24 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         );
     }
 
+    private void checkHasAnyPermissionInWorkspace(
+            Account account,
+            Workspace workspace
+    ) throws CustomAccessDeniedException {
+        checkPermissionInWorkspace(
+                account,
+                workspace,
+                List.of(WorkspaceRole.OBSERVER, WorkspaceRole.MEMBER, WorkspaceRole.ADMIN)
+        );
+    }
+
+    private void checkNotExistAdminInWorkspaceException(
+            Workspace workspace
+    ) throws NotExistAdminInWorkspaceException {
+        if (
+                !workspaceMemberRepository.existsByWorkspaceAndWorkspaceRole(workspace, WorkspaceRole.ADMIN)
+        ){
+            throw new NotExistAdminInWorkspaceException("Không gian làm việc phải có ít nhật một quản trị viên");
+        }
+    }
 }
