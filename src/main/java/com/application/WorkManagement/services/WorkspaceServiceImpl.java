@@ -11,6 +11,7 @@ import com.application.WorkManagement.dto.requests.workspace.InviteCodeRequest;
 import com.application.WorkManagement.dto.requests.workspace.MemberRequest;
 import com.application.WorkManagement.dto.requests.workspace.WorkspaceRequest;
 import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
+import com.application.WorkManagement.dto.responses.table.TableListResponse;
 import com.application.WorkManagement.dto.responses.workspace.InviteCodeResponse;
 import com.application.WorkManagement.dto.responses.workspace.MemberResponse;
 import com.application.WorkManagement.dto.responses.workspace.WorkspaceResponse;
@@ -420,6 +421,60 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                         .build()
         );
         return tableEntityMapper.apply(tableMember);
+    }
+
+    @Override
+    public List<TableEntityResponse> readTablesInWorkspace(String accountId, UUID workspaceId) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Workspace workspace = getWorkspaceFromId(workspaceId);
+        workspacePermissionChecker.checkHasAnyPermissionInWorkspace(account, workspace);
+        if (
+            workspaceMemberRepository.existsWorkspaceMemberByAccountAndWorkspaceAndWorkspaceRoleIn(
+                    account,
+                    workspace,
+                    List.of(WorkspaceRole.ADMIN)
+            )
+        ){
+            return tableRepository
+                    .findTableEntitiesByWorkspace(workspace)
+                    .stream()
+                    .map(table -> {
+                        Optional<TableMember> member = tableMemberRepository
+                                .findTableMemberByAccountAndTable(account, table);
+                        if (member.isPresent()){
+                            return member.orElseThrow();
+                        }
+                        return TableMember
+                                .builder()
+                                .account(account)
+                                .table(table)
+                                .tableRole(null)
+                                .build();
+                    })
+                    .map(tableEntityMapper)
+                    .collect(Collectors.toList());
+        }
+        return tableRepository
+                .findTableEntitiesInWorkspace(
+                        workspace.getUuid(),
+                        account.getUuid()
+                )
+                .stream()
+                .map(table -> {
+                    Optional<TableMember> member = tableMemberRepository
+                            .findTableMemberByAccountAndTable(account, table);
+                    if (member.isPresent()){
+                        return member.orElseThrow();
+                    }
+                    return TableMember
+                            .builder()
+                            .account(account)
+                            .table(table)
+                            .tableRole(null)
+                            .build();
+                })
+                .map(tableEntityMapper)
+                .collect(Collectors.toList());
     }
 
     private Account getAccountFromAuthenticationName(String uuid) throws DataNotFoundException {

@@ -5,6 +5,7 @@ import com.application.WorkManagement.dto.requests.workspace.InviteCodeRequest;
 import com.application.WorkManagement.dto.requests.workspace.MemberRequest;
 import com.application.WorkManagement.dto.requests.workspace.WorkspaceRequest;
 import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
+import com.application.WorkManagement.dto.responses.table.TableListResponse;
 import com.application.WorkManagement.dto.responses.workspace.InviteCodeResponse;
 import com.application.WorkManagement.dto.responses.workspace.MemberResponse;
 import com.application.WorkManagement.dto.responses.workspace.WorkspaceResponse;
@@ -49,4 +50,5 @@ public interface WorkspaceService {
 
     TableEntityResponse createTableInWorkspace(String accountId, UUID workspaceId, TableEntityRequest request) throws DataNotFoundException, CustomAccessDeniedException, CustomDuplicateException;
 
+    List<TableEntityResponse> readTablesInWorkspace(String accountId, UUID workspaceId) throws DataNotFoundException, CustomAccessDeniedException;
 }

@@ -5,6 +5,7 @@ import com.application.WorkManagement.dto.requests.workspace.InviteCodeRequest;
 import com.application.WorkManagement.dto.requests.workspace.MemberRequest;
 import com.application.WorkManagement.dto.requests.workspace.WorkspaceRequest;
 import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
+import com.application.WorkManagement.dto.responses.table.TableListResponse;
 import com.application.WorkManagement.dto.responses.workspace.InviteCodeResponse;
 import com.application.WorkManagement.dto.responses.workspace.MemberResponse;
 import com.application.WorkManagement.dto.responses.workspace.WorkspaceResponse;
@@ -285,6 +286,22 @@ public class WorkspaceController {
                                 authentication.getName(),
                                 workspaceId,
                                 request
+                        )
+                );
+    }
+
+    @GetMapping("/{workspaceId}/tables")
+    public ResponseEntity<List<TableEntityResponse>> readTablesInWorkspace(
+            JwtAuthenticationToken authentication,
+            @PathVariable("workspaceId") UUID workspaceId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        workspaceService.readTablesInWorkspace(
+                                  authentication.getName(),
+                                  workspaceId
                         )
                 );
     }
