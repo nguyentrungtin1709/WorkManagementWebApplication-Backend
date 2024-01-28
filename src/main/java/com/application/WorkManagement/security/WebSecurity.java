@@ -69,7 +69,8 @@ public class WebSecurity {
                         .permitAll()
                         .requestMatchers(
                                 "/api/v1/account/**",
-                                "/api/v1/workspaces/**"
+                                "/api/v1/workspaces/**",
+                                "/api/v1/tables/**"
                         )
                         .hasAnyAuthority(
                                 userRoleMapper.apply(UserRole.USER.name()),

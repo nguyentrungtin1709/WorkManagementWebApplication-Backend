@@ -1,8 +1,10 @@
 package com.application.WorkManagement.controllers.user;
 
+import com.application.WorkManagement.dto.requests.table.TableEntityRequest;
 import com.application.WorkManagement.dto.requests.workspace.InviteCodeRequest;
 import com.application.WorkManagement.dto.requests.workspace.MemberRequest;
 import com.application.WorkManagement.dto.requests.workspace.WorkspaceRequest;
+import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
 import com.application.WorkManagement.dto.responses.workspace.InviteCodeResponse;
 import com.application.WorkManagement.dto.responses.workspace.MemberResponse;
 import com.application.WorkManagement.dto.responses.workspace.WorkspaceResponse;
@@ -267,5 +269,23 @@ public class WorkspaceController {
         return ResponseEntity
                 .noContent()
                 .build();
+    }
+
+    @PostMapping("/{workspaceId}/tables")
+    public ResponseEntity<TableEntityResponse> createTableInWorkspace(
+            JwtAuthenticationToken authentication,
+            @PathVariable("workspaceId") UUID workspaceId,
+            @Valid @RequestBody TableEntityRequest request
+    ) throws DataNotFoundException, CustomDuplicateException, CustomAccessDeniedException {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        workspaceService.createTableInWorkspace(
+                                authentication.getName(),
+                                workspaceId,
+                                request
+                        )
+                );
     }
 }

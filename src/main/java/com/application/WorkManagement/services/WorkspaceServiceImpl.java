@@ -1,28 +1,27 @@
 package com.application.WorkManagement.services;
 
+import com.application.WorkManagement.dto.mappers.table.TableEntityMapper;
+import com.application.WorkManagement.dto.mappers.table.TableListMapper;
 import com.application.WorkManagement.dto.mappers.workspace.InviteCodeMapper;
 import com.application.WorkManagement.dto.mappers.workspace.WorkspaceInviteCodeMapper;
 import com.application.WorkManagement.dto.mappers.workspace.WorkspaceMapper;
 import com.application.WorkManagement.dto.mappers.workspace.WorkspaceMemberMapper;
+import com.application.WorkManagement.dto.requests.table.TableEntityRequest;
 import com.application.WorkManagement.dto.requests.workspace.InviteCodeRequest;
 import com.application.WorkManagement.dto.requests.workspace.MemberRequest;
 import com.application.WorkManagement.dto.requests.workspace.WorkspaceRequest;
+import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
 import com.application.WorkManagement.dto.responses.workspace.InviteCodeResponse;
 import com.application.WorkManagement.dto.responses.workspace.MemberResponse;
 import com.application.WorkManagement.dto.responses.workspace.WorkspaceResponse;
-import com.application.WorkManagement.entities.Account;
-import com.application.WorkManagement.entities.Workspace;
-import com.application.WorkManagement.entities.WorkspaceInviteCode;
-import com.application.WorkManagement.entities.WorkspaceMember;
+import com.application.WorkManagement.entities.*;
+import com.application.WorkManagement.enums.TableRole;
 import com.application.WorkManagement.enums.WorkspaceRole;
 import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
 import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
 import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
 import com.application.WorkManagement.exceptions.custom.NotExistAdminInWorkspaceException;
-import com.application.WorkManagement.repositories.AccountRepository;
-import com.application.WorkManagement.repositories.WorkspaceInviteCodeRepository;
-import com.application.WorkManagement.repositories.WorkspaceMemberRepository;
-import com.application.WorkManagement.repositories.WorkspaceRepository;
+import com.application.WorkManagement.repositories.*;
 import com.application.WorkManagement.services.Interface.WorkspaceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -44,6 +43,16 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
     private final WorkspaceInviteCodeRepository workspaceInviteCodeRepository;
 
+    private final TableRepository tableRepository;
+
+    private final TableMemberRepository tableMemberRepository;
+
+    private final WorkspacePermissionChecker workspacePermissionChecker;
+
+    private final TableEntityMapper tableEntityMapper;
+
+    private final TableListMapper tableListMapper;
+
     private final WorkspaceMapper workspaceMapper;
 
     private final WorkspaceMemberMapper workspaceMemberMapper;
@@ -58,14 +67,24 @@ public class WorkspaceServiceImpl implements WorkspaceService {
             WorkspaceRepository workspaceRepository,
             WorkspaceMemberRepository workspaceMemberRepository,
             WorkspaceInviteCodeRepository workspaceInviteCodeRepository,
+            TableRepository tableRepository,
+            TableMemberRepository tableMemberRepository, WorkspacePermissionChecker workspacePermissionChecker,
+            TableEntityMapper tableEntityMapper,
+            TableListMapper tableListMapper,
             WorkspaceMapper workspaceMapper,
             WorkspaceMemberMapper workspaceMemberMapper,
-            InviteCodeMapper inviteCodeMapper, WorkspaceInviteCodeMapper workspaceInviteCodeMapper
+            InviteCodeMapper inviteCodeMapper,
+            WorkspaceInviteCodeMapper workspaceInviteCodeMapper
     ) {
         this.accountRepository = accountRepository;
         this.workspaceRepository = workspaceRepository;
         this.workspaceMemberRepository = workspaceMemberRepository;
         this.workspaceInviteCodeRepository = workspaceInviteCodeRepository;
+        this.tableRepository = tableRepository;
+        this.tableMemberRepository = tableMemberRepository;
+        this.workspacePermissionChecker = workspacePermissionChecker;
+        this.tableEntityMapper = tableEntityMapper;
+        this.tableListMapper = tableListMapper;
         this.workspaceMapper = workspaceMapper;
         this.workspaceMemberMapper = workspaceMemberMapper;
         this.inviteCodeMapper = inviteCodeMapper;
@@ -130,7 +149,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     ) throws DataNotFoundException, CustomAccessDeniedException {
         Account account = getAccountFromAuthenticationName(accountId);
         Workspace workspace = getWorkspaceFromId(workspaceId);
-        checkAdminPermissionInWorkspace(account, workspace);
+        workspacePermissionChecker.checkAdminPermissionInWorkspace(account, workspace);
         workspace.setName(request.getName());
         workspace.setDescription(request.getDescription());
         workspace = workspaceRepository.save(workspace);
@@ -146,10 +165,11 @@ public class WorkspaceServiceImpl implements WorkspaceService {
             String accountId,
             UUID workspaceId
     ) throws DataNotFoundException, CustomAccessDeniedException {
-        checkAdminPermissionInWorkspace(
-                getAccountFromAuthenticationName(accountId),
-                getWorkspaceFromId(workspaceId)
-        );
+        workspacePermissionChecker
+                .checkAdminPermissionInWorkspace(
+                        getAccountFromAuthenticationName(accountId),
+                        getWorkspaceFromId(workspaceId)
+                );
         workspaceRepository.deleteById(workspaceId);
     }
 
@@ -163,7 +183,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                 .findAccountByEmail(request.getEmail())
                 .orElseThrow(() -> new DataNotFoundException("Tài khoản không tồn tại"));
         Workspace workspace = getWorkspaceFromId(workspaceId);
-        checkAdminPermissionInWorkspace(
+        workspacePermissionChecker.checkAdminPermissionInWorkspace(
                 getAccountFromAuthenticationName(accountId),
                 workspace
         );
@@ -192,7 +212,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     ) throws DataNotFoundException, CustomAccessDeniedException, CustomDuplicateException {
         Account account = getAccountFromAuthenticationName(accountId);
         Workspace workspace = getWorkspaceFromId(workspaceId);
-        checkAdminPermissionInWorkspace(account, workspace);
+        workspacePermissionChecker.checkAdminPermissionInWorkspace(account, workspace);
         if (
             workspaceInviteCodeRepository.existsByAccountAndWorkspace(account, workspace)
         ){
@@ -218,7 +238,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     ) throws DataNotFoundException, CustomAccessDeniedException {
         Account account = getAccountFromAuthenticationName(accountId);
         Workspace workspace = getWorkspaceFromId(workspaceId);
-        checkAdminPermissionInWorkspace(account, workspace);
+        workspacePermissionChecker.checkAdminPermissionInWorkspace(account, workspace);
         return inviteCodeMapper.apply(
                 getWorkspaceInviteCodeFromAccountAndWorkspace(account, workspace)
         );
@@ -232,7 +252,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     ) throws DataNotFoundException, CustomAccessDeniedException {
         Account account = getAccountFromAuthenticationName(accountId);
         Workspace workspace = getWorkspaceFromId(workspaceId);
-        checkAdminPermissionInWorkspace(account, workspace);
+        workspacePermissionChecker.checkAdminPermissionInWorkspace(account, workspace);
         workspaceInviteCodeRepository.deleteWorkspaceInviteCodeByAccountAndWorkspace(account, workspace);
     }
 
@@ -281,7 +301,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     ) throws DataNotFoundException, CustomAccessDeniedException {
         Account account = getAccountFromAuthenticationName(accountId);
         Workspace workspace = getWorkspaceFromId(workspaceId);
-        checkHasAnyPermissionInWorkspace(account, workspace);
+        workspacePermissionChecker.checkHasAnyPermissionInWorkspace(account, workspace);
         if (keyword == null){
             return workspaceMemberRepository
                     .readWorkspaceMembersByWorkspaceOrderByWorkspaceRoleDesc(workspace)
@@ -308,7 +328,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     ) throws DataNotFoundException, CustomAccessDeniedException, NotExistAdminInWorkspaceException {
         Account member = getAccountFromId(memberId);
         Workspace workspace = getWorkspaceFromId(workspaceId);
-        checkAdminPermissionInWorkspace(
+        workspacePermissionChecker.checkAdminPermissionInWorkspace(
                 getAccountFromAuthenticationName(accountId),
                 workspace
         );
@@ -336,9 +356,9 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         Workspace workspace = getWorkspaceFromId(workspaceId);
         Account member = getAccountFromId(memberId);
         if (account.getUuid().equals(member.getUuid())){
-            checkHasAnyPermissionInWorkspace(account, workspace);
+            workspacePermissionChecker.checkHasAnyPermissionInWorkspace(account, workspace);
         } else {
-            checkAdminPermissionInWorkspace(account, workspace);
+            workspacePermissionChecker.checkAdminPermissionInWorkspace(account, workspace);
         }
         workspaceMemberRepository.deleteWorkspaceMemberByAccount_UuidAndWorkspace_UuidCustom(
                 member.getUuid(),
@@ -365,6 +385,41 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                 workspace.getUuid()
         );
         checkNotExistAdminInWorkspaceException(workspace);
+    }
+
+    @Override
+    public TableEntityResponse createTableInWorkspace(
+            String accountId,
+            UUID workspaceId,
+            TableEntityRequest request
+    ) throws DataNotFoundException, CustomAccessDeniedException, CustomDuplicateException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Workspace workspace = getWorkspaceFromId(workspaceId);
+        workspacePermissionChecker.checkMemberPermissionInWorkspace(account, workspace);
+        if (
+            tableRepository.existsTableEntityByWorkspaceAndName(workspace, request.getName())
+        ){
+            throw new CustomDuplicateException("Bảng đã tồn tại trong không gian làm việc");
+        }
+        TableEntity table = tableRepository.save(
+                TableEntity
+                    .builder()
+                    .name(request.getName())
+                    .description(request.getDescription())
+                    .tableScope(request.getScope())
+                    .account(account)
+                    .workspace(workspace)
+                    .build()
+        );
+        TableMember tableMember = tableMemberRepository.save(
+                TableMember
+                        .builder()
+                        .account(account)
+                        .table(table)
+                        .tableRole(TableRole.ADMIN)
+                        .build()
+        );
+        return tableEntityMapper.apply(tableMember);
     }
 
     private Account getAccountFromAuthenticationName(String uuid) throws DataNotFoundException {
@@ -394,41 +449,6 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                 .findWorkspaceInviteCodeByAccountAndWorkspace(account, workspace)
                 .orElseThrow(() -> new DataNotFoundException("Mã mời không tồn tại"));
 
-    }
-
-    private void checkPermissionInWorkspace(
-            Account account,
-            Workspace workspace,
-            List<WorkspaceRole> workspaceRoleList
-    ) throws CustomAccessDeniedException {
-        WorkspaceMember member = workspaceMemberRepository
-                .readWorkspaceMemberByAccountAndWorkspace(account, workspace)
-                .orElseThrow(() -> new CustomAccessDeniedException("Truy cập tài nguyên bị từ chối"));
-        if (!workspaceRoleList.contains(member.getWorkspaceRole())){
-            throw new CustomAccessDeniedException("Truy cập tài nguyên bị từ chối");
-        }
-    }
-
-    private void checkAdminPermissionInWorkspace(
-            Account account,
-            Workspace workspace
-    ) throws CustomAccessDeniedException {
-        checkPermissionInWorkspace(
-                account,
-                workspace,
-                List.of(WorkspaceRole.ADMIN)
-        );
-    }
-
-    private void checkHasAnyPermissionInWorkspace(
-            Account account,
-            Workspace workspace
-    ) throws CustomAccessDeniedException {
-        checkPermissionInWorkspace(
-                account,
-                workspace,
-                List.of(WorkspaceRole.OBSERVER, WorkspaceRole.MEMBER, WorkspaceRole.ADMIN)
-        );
     }
 
     private void checkNotExistAdminInWorkspaceException(

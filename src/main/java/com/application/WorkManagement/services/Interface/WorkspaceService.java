@@ -1,8 +1,10 @@
 package com.application.WorkManagement.services.Interface;
 
+import com.application.WorkManagement.dto.requests.table.TableEntityRequest;
 import com.application.WorkManagement.dto.requests.workspace.InviteCodeRequest;
 import com.application.WorkManagement.dto.requests.workspace.MemberRequest;
 import com.application.WorkManagement.dto.requests.workspace.WorkspaceRequest;
+import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
 import com.application.WorkManagement.dto.responses.workspace.InviteCodeResponse;
 import com.application.WorkManagement.dto.responses.workspace.MemberResponse;
 import com.application.WorkManagement.dto.responses.workspace.WorkspaceResponse;
@@ -44,5 +46,7 @@ public interface WorkspaceService {
     MemberResponse updateRoleOfMemberInWorkspace(String accountId, UUID memberId, UUID workspaceId, InviteCodeRequest request) throws DataNotFoundException, CustomAccessDeniedException, NotExistAdminInWorkspaceException;
 
     void deleteMemberInWorkspace(String accountId, UUID workspaceId, UUID memberId) throws DataNotFoundException, CustomAccessDeniedException, NotExistAdminInWorkspaceException;
+
+    TableEntityResponse createTableInWorkspace(String accountId, UUID workspaceId, TableEntityRequest request) throws DataNotFoundException, CustomAccessDeniedException, CustomDuplicateException;
 
 }
