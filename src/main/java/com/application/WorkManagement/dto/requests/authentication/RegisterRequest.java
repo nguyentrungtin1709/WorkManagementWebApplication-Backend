@@ -22,11 +22,9 @@ public class RegisterRequest {
     )
     private String name;
 
-    @Email(
+    @Pattern(
+            regexp = "^[\\w-.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
             message = "Email không hợp lệ"
-    )
-    @NotBlank(
-            message = "Email không được để trống"
     )
     private String email;
 

@@ -17,6 +17,7 @@ import com.application.WorkManagement.repositories.AccountRepository;
 import com.application.WorkManagement.repositories.AvatarRepository;
 import com.application.WorkManagement.services.Interface.AccountService;
 import com.application.WorkManagement.services.Interface.UploadImageService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -33,6 +34,8 @@ import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class AccountServiceImpl implements AccountService {
@@ -166,6 +169,19 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public EmailCheckResponse checkExistEmail(EmailRequest emailRequest) {
+        Pattern emailPattern = Pattern.compile("^[\\w-.]+@([\\w-]+\\.)+[\\w-]{2,4}$");
+        if (
+            !emailPattern
+            .matcher(emailRequest.getEmail())
+            .matches()
+        ){
+            return EmailCheckResponse
+                    .builder()
+                    .exist(false)
+                    .status(HttpStatus.BAD_REQUEST)
+                    .email("Email không hợp lệ")
+                    .build();
+        }
         Boolean exist = accountRepository
                 .existsAccountByEmail(
                         emailRequest.getEmail()
@@ -175,7 +191,7 @@ public class AccountServiceImpl implements AccountService {
                     .builder()
                     .exist(exist)
                     .status(HttpStatus.BAD_REQUEST)
-                    .email("Email đã được dăng ký")
+                    .email("Email đã được đăng ký")
                     .build();
         }
         return EmailCheckResponse

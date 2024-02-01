@@ -9,6 +9,7 @@ import com.application.WorkManagement.dto.responses.authentication.TokenResponse
 import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
 import com.application.WorkManagement.services.Interface.AccountService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -52,10 +53,10 @@ public class AuthenticationController {
                 );
     }
 
-    @GetMapping("/email")
+    @GetMapping("/exist-email")
     public ResponseEntity<EmailCheckResponse> checkExistEmail(
-        @Valid @RequestBody
-        EmailRequest emailRequest
+            @RequestParam(name = "value")
+            EmailRequest emailRequest
     ){
         EmailCheckResponse emailCheckResponse = accountService.checkExistEmail(emailRequest);
         return ResponseEntity
