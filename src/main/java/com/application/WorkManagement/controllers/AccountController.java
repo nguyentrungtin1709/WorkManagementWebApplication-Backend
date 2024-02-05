@@ -64,7 +64,7 @@ public class AccountController {
     }
 
     @PatchMapping("/avatar")
-    public ResponseEntity<AccountResponse> updateImageAccount(
+    public ResponseEntity<AccountResponse> updateAvatarAccount(
             JwtAuthenticationToken authentication,
             @RequestParam("image") MultipartFile multipartFile
     ) throws InvalidFileExtensionException, URISyntaxException, IOException, EmptyImageException, DataNotFoundException
@@ -77,6 +77,20 @@ public class AccountController {
                                 authentication.getName(),
                                 multipartFile
                     )
+                );
+    }
+
+    @DeleteMapping("/avatar")
+    public ResponseEntity<AccountResponse> deleteAvatarAccount(
+            JwtAuthenticationToken authentication
+    ) throws DataNotFoundException, URISyntaxException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        accountService.deleteAvatarAccount(
+                                authentication.getName()
+                        )
                 );
     }
 

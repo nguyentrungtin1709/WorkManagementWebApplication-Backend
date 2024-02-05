@@ -243,6 +243,20 @@ public class AccountServiceImpl implements AccountService {
         );
     }
 
+    @Override
+    public AccountResponse deleteAvatarAccount(String uuid) throws DataNotFoundException, URISyntaxException {
+        Account account = getAccountFromAuthenticationName(uuid);
+        if (account.getAvatar() != null){
+            String path = account.getAvatar().getPath();
+            String fileName = path.substring(path.lastIndexOf("/") + 1);
+            uploadImageService.removeFileFromS3(fileName);
+        }
+        account.setAvatar(null);
+        return accountMapper.apply(
+                accountRepository.save(account)
+        );
+    }
+
     private Account getAccountFromAuthenticationName(String uuid) throws DataNotFoundException {
         return accountRepository
                 .findById(UUID.fromString(uuid))

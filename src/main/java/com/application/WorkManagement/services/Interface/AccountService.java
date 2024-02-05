@@ -33,4 +33,7 @@ public interface AccountService {
     void updatePasswordAccount(String uuid, PasswordRequest request) throws DataNotFoundException, PasswordException;
 
     AccountResponse updateNotificationAccount(String uuid) throws DataNotFoundException;
+
+    AccountResponse deleteAvatarAccount(String uuid) throws DataNotFoundException, URISyntaxException;
+
 }
