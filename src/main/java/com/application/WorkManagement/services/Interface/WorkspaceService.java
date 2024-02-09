@@ -5,16 +5,14 @@ import com.application.WorkManagement.dto.requests.workspace.InviteCodeRequest;
 import com.application.WorkManagement.dto.requests.workspace.MemberRequest;
 import com.application.WorkManagement.dto.requests.workspace.WorkspaceRequest;
 import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
-import com.application.WorkManagement.dto.responses.table.TableListResponse;
 import com.application.WorkManagement.dto.responses.workspace.InviteCodeResponse;
 import com.application.WorkManagement.dto.responses.workspace.MemberResponse;
 import com.application.WorkManagement.dto.responses.workspace.WorkspaceResponse;
-import com.application.WorkManagement.enums.WorkspaceRole;
-import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
-import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
-import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
-import com.application.WorkManagement.exceptions.custom.NotExistAdminInWorkspaceException;
+import com.application.WorkManagement.exceptions.custom.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.UUID;
 
@@ -51,4 +49,9 @@ public interface WorkspaceService {
     TableEntityResponse createTableInWorkspace(String accountId, UUID workspaceId, TableEntityRequest request) throws DataNotFoundException, CustomAccessDeniedException, CustomDuplicateException;
 
     List<TableEntityResponse> readTablesInWorkspace(String accountId, UUID workspaceId) throws DataNotFoundException, CustomAccessDeniedException;
+
+    WorkspaceResponse updateWorkspaceBackground(String accountId, UUID workspaceId, MultipartFile file) throws DataNotFoundException, CustomAccessDeniedException, URISyntaxException, InvalidFileExtensionException, IOException, EmptyImageException;
+
+    WorkspaceResponse deleteWorkspaceBackground(String accountId, UUID workspaceId) throws DataNotFoundException, CustomAccessDeniedException, URISyntaxException;
+
 }

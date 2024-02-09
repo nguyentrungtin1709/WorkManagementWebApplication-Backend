@@ -15,6 +15,7 @@ public class WorkspaceMapper implements Function<WorkspaceMember, WorkspaceRespo
                 .id(workspaceMember.getWorkspace().getUuid())
                 .name(workspaceMember.getWorkspace().getName())
                 .description(workspaceMember.getWorkspace().getDescription())
+                .background(workspaceMember.getWorkspace().getBackground())
                 .createdAt(workspaceMember.getWorkspace().getCreatedAt())
                 .role(workspaceMember.getWorkspaceRole())
                 .build();

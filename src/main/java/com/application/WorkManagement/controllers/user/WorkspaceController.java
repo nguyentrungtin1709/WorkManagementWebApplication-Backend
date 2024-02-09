@@ -5,15 +5,10 @@ import com.application.WorkManagement.dto.requests.workspace.InviteCodeRequest;
 import com.application.WorkManagement.dto.requests.workspace.MemberRequest;
 import com.application.WorkManagement.dto.requests.workspace.WorkspaceRequest;
 import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
-import com.application.WorkManagement.dto.responses.table.TableListResponse;
 import com.application.WorkManagement.dto.responses.workspace.InviteCodeResponse;
 import com.application.WorkManagement.dto.responses.workspace.MemberResponse;
 import com.application.WorkManagement.dto.responses.workspace.WorkspaceResponse;
-import com.application.WorkManagement.enums.WorkspaceRole;
-import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
-import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
-import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
-import com.application.WorkManagement.exceptions.custom.NotExistAdminInWorkspaceException;
+import com.application.WorkManagement.exceptions.custom.*;
 import com.application.WorkManagement.services.Interface.WorkspaceService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -23,7 +18,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.UUID;
 
@@ -102,6 +100,40 @@ public class WorkspaceController {
                                 authentication.getName(),
                                 workspaceId,
                                 workspaceRequest
+                        )
+                );
+    }
+
+    @PatchMapping("/{workspaceId}/background")
+    public ResponseEntity<WorkspaceResponse> updateWorkspaceBackground(
+            JwtAuthenticationToken authentication,
+            @PathVariable("workspaceId") UUID workspaceId,
+            @RequestParam("image") MultipartFile file
+    ) throws DataNotFoundException, InvalidFileExtensionException, CustomAccessDeniedException, URISyntaxException, IOException, EmptyImageException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        workspaceService.updateWorkspaceBackground(
+                                authentication.getName(),
+                                workspaceId,
+                                file
+                        )
+                );
+    }
+
+    @DeleteMapping("/{workspaceId}/background")
+    public ResponseEntity<WorkspaceResponse> deleteWorkspaceBackground(
+            JwtAuthenticationToken authentication,
+            @PathVariable("workspaceId") UUID workspaceId
+    ) throws DataNotFoundException, CustomAccessDeniedException, URISyntaxException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        workspaceService.deleteWorkspaceBackground(
+                                authentication.getName(),
+                                workspaceId
                         )
                 );
     }

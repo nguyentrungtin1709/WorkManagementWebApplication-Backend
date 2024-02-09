@@ -10,14 +10,13 @@ import com.application.WorkManagement.dto.responses.account.AccountResponse;
 import com.application.WorkManagement.dto.responses.account.EmailCheckResponse;
 import com.application.WorkManagement.dto.responses.authentication.TokenResponse;
 import com.application.WorkManagement.entities.Account;
-import com.application.WorkManagement.entities.Avatar;
+import com.application.WorkManagement.entities.Image;
 import com.application.WorkManagement.enums.UserRole;
 import com.application.WorkManagement.exceptions.custom.*;
 import com.application.WorkManagement.repositories.AccountRepository;
-import com.application.WorkManagement.repositories.AvatarRepository;
+import com.application.WorkManagement.repositories.ImageRepository;
 import com.application.WorkManagement.services.Interface.AccountService;
 import com.application.WorkManagement.services.Interface.UploadImageService;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -34,7 +33,6 @@ import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
@@ -52,15 +50,14 @@ public class AccountServiceImpl implements AccountService {
 
     private final UploadImageService uploadImageService;
 
-    private final AvatarRepository avatarRepository;
-
     @Autowired
     public AccountServiceImpl(
             AccountRepository accountRepository,
             PasswordEncoder passwordEncoder,
             DaoAuthenticationProvider daoAuthenticationProvider,
             AccountMapper accountMapper,
-            JsonWebTokenService jsonWebTokenService, UploadImageService uploadImageService, AvatarRepository avatarRepository
+            JsonWebTokenService jsonWebTokenService,
+            UploadImageService uploadImageService
     ) {
         this.accountRepository = accountRepository;
         this.passwordEncoder = passwordEncoder;
@@ -68,7 +65,6 @@ public class AccountServiceImpl implements AccountService {
         this.accountMapper = accountMapper;
         this.jsonWebTokenService = jsonWebTokenService;
         this.uploadImageService = uploadImageService;
-        this.avatarRepository = avatarRepository;
     }
 
     @Override
@@ -149,18 +145,9 @@ public class AccountServiceImpl implements AccountService {
     ) throws URISyntaxException, InvalidFileExtensionException, IOException, EmptyImageException, DataNotFoundException {
         Account account = getAccountFromAuthenticationName(uuid);
         if (account.getAvatar() != null){
-            String path = account.getAvatar().getPath();
-            String fileName = path.substring(path.lastIndexOf("/") + 1);
-            uploadImageService.removeFileFromS3(fileName);
+            uploadImageService.removeFileFromS3(account.getAvatar());
         }
-        Avatar avatar = avatarRepository.save(
-                Avatar.builder()
-                        .originalFileName(file.getOriginalFilename())
-                        .contentType(file.getContentType())
-                        .size(file.getSize())
-                        .build()
-        );
-        URI avatarURI = uploadImageService.uploadImageToS3(avatar.getUuid(), file);
+        URI avatarURI = uploadImageService.uploadImageToS3(file);
         account.setAvatar(avatarURI);
         return accountMapper.apply(
                 accountRepository.save(account)
@@ -247,9 +234,7 @@ public class AccountServiceImpl implements AccountService {
     public AccountResponse deleteAvatarAccount(String uuid) throws DataNotFoundException, URISyntaxException {
         Account account = getAccountFromAuthenticationName(uuid);
         if (account.getAvatar() != null){
-            String path = account.getAvatar().getPath();
-            String fileName = path.substring(path.lastIndexOf("/") + 1);
-            uploadImageService.removeFileFromS3(fileName);
+            uploadImageService.removeFileFromS3(account.getAvatar());
         }
         account.setAvatar(null);
         return accountMapper.apply(

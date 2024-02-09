@@ -14,7 +14,7 @@ import java.util.UUID;
 @Table(
         name = "hinh_dai_dien"
 )
-public class Avatar {
+public class Image {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

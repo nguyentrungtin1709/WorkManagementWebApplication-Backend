@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -38,6 +39,11 @@ public class Workspace {
             length = 1000
     )
     private String description;
+
+    @Column(
+            name = "kglv_hinh_nen"
+    )
+    private URI background;
 
     @CreationTimestamp
     @Column(

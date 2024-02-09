@@ -1,7 +1,6 @@
 package com.application.WorkManagement.services;
 
 import com.application.WorkManagement.dto.mappers.table.TableEntityMapper;
-import com.application.WorkManagement.dto.mappers.table.TableListMapper;
 import com.application.WorkManagement.dto.mappers.workspace.InviteCodeMapper;
 import com.application.WorkManagement.dto.mappers.workspace.WorkspaceInviteCodeMapper;
 import com.application.WorkManagement.dto.mappers.workspace.WorkspaceMapper;
@@ -11,23 +10,24 @@ import com.application.WorkManagement.dto.requests.workspace.InviteCodeRequest;
 import com.application.WorkManagement.dto.requests.workspace.MemberRequest;
 import com.application.WorkManagement.dto.requests.workspace.WorkspaceRequest;
 import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
-import com.application.WorkManagement.dto.responses.table.TableListResponse;
 import com.application.WorkManagement.dto.responses.workspace.InviteCodeResponse;
 import com.application.WorkManagement.dto.responses.workspace.MemberResponse;
 import com.application.WorkManagement.dto.responses.workspace.WorkspaceResponse;
 import com.application.WorkManagement.entities.*;
 import com.application.WorkManagement.enums.TableRole;
 import com.application.WorkManagement.enums.WorkspaceRole;
-import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
-import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
-import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
-import com.application.WorkManagement.exceptions.custom.NotExistAdminInWorkspaceException;
+import com.application.WorkManagement.exceptions.custom.*;
 import com.application.WorkManagement.repositories.*;
+import com.application.WorkManagement.services.Interface.UploadImageService;
 import com.application.WorkManagement.services.Interface.WorkspaceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -52,8 +52,6 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
     private final TableEntityMapper tableEntityMapper;
 
-    private final TableListMapper tableListMapper;
-
     private final WorkspaceMapper workspaceMapper;
 
     private final WorkspaceMemberMapper workspaceMemberMapper;
@@ -61,6 +59,8 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     private final InviteCodeMapper inviteCodeMapper;
 
     private final WorkspaceInviteCodeMapper workspaceInviteCodeMapper;
+
+    private final UploadImageService uploadImageService;
 
     @Autowired
     public WorkspaceServiceImpl(
@@ -71,11 +71,11 @@ public class WorkspaceServiceImpl implements WorkspaceService {
             TableRepository tableRepository,
             TableMemberRepository tableMemberRepository, WorkspacePermissionChecker workspacePermissionChecker,
             TableEntityMapper tableEntityMapper,
-            TableListMapper tableListMapper,
             WorkspaceMapper workspaceMapper,
             WorkspaceMemberMapper workspaceMemberMapper,
             InviteCodeMapper inviteCodeMapper,
-            WorkspaceInviteCodeMapper workspaceInviteCodeMapper
+            WorkspaceInviteCodeMapper workspaceInviteCodeMapper,
+            UploadImageService uploadImageService
     ) {
         this.accountRepository = accountRepository;
         this.workspaceRepository = workspaceRepository;
@@ -85,11 +85,11 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         this.tableMemberRepository = tableMemberRepository;
         this.workspacePermissionChecker = workspacePermissionChecker;
         this.tableEntityMapper = tableEntityMapper;
-        this.tableListMapper = tableListMapper;
         this.workspaceMapper = workspaceMapper;
         this.workspaceMemberMapper = workspaceMemberMapper;
         this.inviteCodeMapper = inviteCodeMapper;
         this.workspaceInviteCodeMapper = workspaceInviteCodeMapper;
+        this.uploadImageService = uploadImageService;
     }
 
     @Override
@@ -121,7 +121,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     public List<WorkspaceResponse> readWorkspaceList(String accountId) throws DataNotFoundException {
         Account account = getAccountFromAuthenticationName(accountId);
         return workspaceMemberRepository
-                .readWorkspaceMembersByAccount(account)
+                .readWorkspaceMembersByAccountOrderByWorkspace_Name(account)
                 .stream()
                 .map(workspaceMapper)
                 .collect(Collectors.toList());
@@ -475,6 +475,51 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                 })
                 .map(tableEntityMapper)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(rollbackFor = {
+            IOException.class,
+            URISyntaxException.class,
+            InvalidFileExtensionException.class,
+            EmptyImageException.class
+    })
+    public WorkspaceResponse updateWorkspaceBackground(
+            String accountId,
+            UUID workspaceId,
+            MultipartFile file
+    ) throws DataNotFoundException, CustomAccessDeniedException, URISyntaxException, InvalidFileExtensionException, IOException, EmptyImageException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Workspace workspace = getWorkspaceFromId(workspaceId);
+        workspacePermissionChecker.checkAdminPermissionInWorkspace(account, workspace);
+        if (workspace.getBackground() != null){
+            uploadImageService.removeFileFromS3(workspace.getBackground());
+        }
+        URI backgroundUri = uploadImageService.uploadImageToS3(file);
+        workspace.setBackground(backgroundUri);
+        workspace = workspaceRepository.save(workspace);
+        return workspaceMapper.apply(
+                workspaceMemberRepository
+                        .readWorkspaceMemberByAccountAndWorkspace(account, workspace)
+                        .orElseThrow()
+        );
+    }
+
+    @Override
+    public WorkspaceResponse deleteWorkspaceBackground(String accountId, UUID workspaceId) throws DataNotFoundException, CustomAccessDeniedException, URISyntaxException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Workspace workspace = getWorkspaceFromId(workspaceId);
+        workspacePermissionChecker.checkAdminPermissionInWorkspace(account, workspace);
+        if (workspace.getBackground() != null){
+            uploadImageService.removeFileFromS3(workspace.getBackground());
+        }
+        workspace.setBackground(null);
+        workspace = workspaceRepository.save(workspace);
+        return workspaceMapper.apply(
+                workspaceMemberRepository
+                        .readWorkspaceMemberByAccountAndWorkspace(account, workspace)
+                        .orElseThrow()
+        );
     }
 
     private Account getAccountFromAuthenticationName(String uuid) throws DataNotFoundException {

@@ -19,7 +19,7 @@ import java.util.UUID;
 @Repository
 public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember, WorkspaceMemberId> {
 
-    List<WorkspaceMember> readWorkspaceMembersByAccount(Account account);
+    List<WorkspaceMember> readWorkspaceMembersByAccountOrderByWorkspace_Name(Account account);
 
     Optional<WorkspaceMember> readWorkspaceMemberByAccountAndWorkspace(Account account, Workspace workspace);
 
