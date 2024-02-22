@@ -1,4 +1,4 @@
-package com.application.WorkManagement.services;
+package com.application.WorkManagement.services.workspace;
 
 import com.application.WorkManagement.dto.mappers.table.TableEntityMapper;
 import com.application.WorkManagement.dto.mappers.workspace.InviteCodeMapper;
@@ -560,4 +560,5 @@ public class WorkspaceServiceImpl implements WorkspaceService {
             throw new NotExistAdminInWorkspaceException("Không gian làm việc phải có ít nhật một quản trị viên");
         }
     }
+
 }

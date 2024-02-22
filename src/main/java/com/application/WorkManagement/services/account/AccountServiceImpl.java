@@ -1,4 +1,4 @@
-package com.application.WorkManagement.services;
+package com.application.WorkManagement.services.account;
 
 import com.application.WorkManagement.dto.mappers.account.AccountMapper;
 import com.application.WorkManagement.dto.requests.account.EmailRequest;
@@ -10,13 +10,12 @@ import com.application.WorkManagement.dto.responses.account.AccountResponse;
 import com.application.WorkManagement.dto.responses.account.EmailCheckResponse;
 import com.application.WorkManagement.dto.responses.authentication.TokenResponse;
 import com.application.WorkManagement.entities.Account;
-import com.application.WorkManagement.entities.Image;
 import com.application.WorkManagement.enums.UserRole;
 import com.application.WorkManagement.exceptions.custom.*;
 import com.application.WorkManagement.repositories.AccountRepository;
-import com.application.WorkManagement.repositories.ImageRepository;
 import com.application.WorkManagement.services.Interface.AccountService;
 import com.application.WorkManagement.services.Interface.UploadImageService;
+import com.application.WorkManagement.services.authentication.JsonWebTokenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

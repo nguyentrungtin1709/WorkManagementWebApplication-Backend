@@ -1,4 +1,4 @@
-package com.application.WorkManagement.services;
+package com.application.WorkManagement.services.workspace;
 
 import com.application.WorkManagement.entities.Account;
 import com.application.WorkManagement.entities.Workspace;

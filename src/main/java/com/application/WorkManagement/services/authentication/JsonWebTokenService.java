@@ -1,4 +1,4 @@
-package com.application.WorkManagement.services;
+package com.application.WorkManagement.services.authentication;
 
 import com.application.WorkManagement.entities.Account;
 import org.springframework.beans.factory.annotation.Autowired;
