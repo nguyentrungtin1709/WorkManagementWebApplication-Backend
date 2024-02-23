@@ -19,4 +19,6 @@ public interface TableMemberRepository extends JpaRepository<TableMember, TableC
 
     Boolean existsTableMemberByAccountAndTableAndTableRoleIn(Account account, TableEntity table, Collection<TableRole> roles);
 
+    Boolean existsTableMemberByAccountAndTable(Account account, TableEntity table);
+
 }

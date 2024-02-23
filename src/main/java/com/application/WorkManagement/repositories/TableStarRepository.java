@@ -17,6 +17,8 @@ public interface TableStarRepository extends JpaRepository<TableStar, TableCompo
 
     List<TableStar> findTableStarsByAccount(Account account);
 
+    List<TableStar> findTableStarsByTable(TableEntity table);
+
     void deleteTableStarByAccountAndTable(Account account, TableEntity table);
 
 }

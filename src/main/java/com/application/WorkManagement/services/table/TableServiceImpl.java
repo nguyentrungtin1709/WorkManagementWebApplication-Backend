@@ -2,12 +2,13 @@ package com.application.WorkManagement.services.table;
 
 import com.application.WorkManagement.dto.mappers.table.TableEntityMapper;
 import com.application.WorkManagement.dto.mappers.table.TableStarMapper;
+import com.application.WorkManagement.dto.requests.table.TableScopeRequest;
+import com.application.WorkManagement.dto.requests.table.TableUpdatingRequest;
 import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
 import com.application.WorkManagement.dto.responses.table.TableStarResponse;
-import com.application.WorkManagement.entities.Account;
-import com.application.WorkManagement.entities.TableEntity;
-import com.application.WorkManagement.entities.TableMember;
-import com.application.WorkManagement.entities.TableStar;
+import com.application.WorkManagement.entities.*;
+import com.application.WorkManagement.enums.ActivityType;
+import com.application.WorkManagement.enums.TableScope;
 import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
 import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
 import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
@@ -149,6 +150,80 @@ public class TableServiceImpl implements TableService {
         TableEntity table = getTableFromId(tableId);
         tableStarRepository.deleteTableStarByAccountAndTable(account, table);
     }
+
+    @Override
+    public TableEntityResponse updateTable(
+            String accountId,
+            UUID tableId,
+            TableUpdatingRequest request
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        TableEntity table = getTableFromId(tableId);
+        tablePermissionChecker.checkManagePermission(account, table);
+        table.setName(request.getName());
+        table.setDescription(request.getDescription());
+        table = tableRepository.save(table);
+        return tableEntityMapper
+                .apply(
+                        tableMemberRepository
+                                .findTableMemberByAccountAndTable(account, table)
+                                .orElseThrow()
+                );
+    }
+
+    @Override
+    @Transactional
+    public TableEntityResponse updateScopeTable(
+            String accountId,
+            UUID tableId,
+            TableScopeRequest request
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        TableEntity table = getTableFromId(tableId);
+        tablePermissionChecker.checkManagePermission(account, table);
+        table.setTableScope(request.getScope());
+        table = tableRepository.save(table);
+        if (table.getTableScope()
+                .equals(TableScope.GROUP)
+        ){
+            tableStarRepository.findTableStarsByTable(table)
+                    .forEach(tableStar -> {
+                        if (!tableMemberRepository
+                                .existsTableMemberByAccountAndTable(tableStar.getAccount(), tableStar.getTable())
+                        ){
+                            tableStarRepository.deleteTableStarByAccountAndTable(tableStar.getAccount(), tableStar.getTable());
+                        }
+                    });
+        }
+        activityRepository.save(
+                Activity
+                .builder()
+                .activityType(ActivityType.CHANGE_SCOPE_TABLE)
+                .account(account)
+                .table(table)
+                .category(null)
+                .card(null)
+                .build()
+        );
+        return tableEntityMapper.apply(
+                tableMemberRepository
+                        .findTableMemberByAccountAndTable(account, table)
+                        .orElseThrow()
+        );
+    }
+
+    @Override
+    @Transactional
+    public void deleteTable(
+            String accountId,
+            UUID tableId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        TableEntity table = getTableFromId(tableId);
+        tablePermissionChecker.checkManagePermission(account, table);
+        tableRepository.deleteById(table.getUuid());
+    }
+
 
     private Account getAccountFromAuthenticationName(String uuid) throws DataNotFoundException {
         return accountRepository

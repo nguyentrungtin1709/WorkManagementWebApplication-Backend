@@ -1,5 +1,7 @@
 package com.application.WorkManagement.services.Interface;
 
+import com.application.WorkManagement.dto.requests.table.TableScopeRequest;
+import com.application.WorkManagement.dto.requests.table.TableUpdatingRequest;
 import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
 import com.application.WorkManagement.dto.responses.table.TableStarResponse;
 import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
@@ -21,4 +23,9 @@ public interface TableService {
 
     void deleteTableStar(String accountId, UUID tableId) throws DataNotFoundException;
 
+    TableEntityResponse updateTable(String accountId, UUID tableId, TableUpdatingRequest request) throws DataNotFoundException, CustomAccessDeniedException;
+
+    TableEntityResponse updateScopeTable(String accountId, UUID tableId, TableScopeRequest request) throws DataNotFoundException, CustomAccessDeniedException;
+
+    void deleteTable(String accountId, UUID tableId) throws DataNotFoundException, CustomAccessDeniedException;
 }

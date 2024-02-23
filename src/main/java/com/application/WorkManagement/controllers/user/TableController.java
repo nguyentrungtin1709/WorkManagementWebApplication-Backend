@@ -1,12 +1,15 @@
 package com.application.WorkManagement.controllers.user;
 
+import com.application.WorkManagement.dto.requests.table.TableScopeRequest;
 import com.application.WorkManagement.dto.requests.table.TableStarRequest;
+import com.application.WorkManagement.dto.requests.table.TableUpdatingRequest;
 import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
 import com.application.WorkManagement.dto.responses.table.TableStarResponse;
 import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
 import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
 import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
 import com.application.WorkManagement.services.Interface.TableService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -94,6 +97,53 @@ public class TableController {
         @PathVariable("tableId") UUID tableId
     ) throws DataNotFoundException {
         tableService.deleteTableStar(authentication.getName(), tableId);
+        return ResponseEntity
+                .noContent()
+                .build();
+    }
+
+    @PatchMapping("/{tableId}")
+    public ResponseEntity<TableEntityResponse> updateTable(
+            JwtAuthenticationToken authentication,
+            @PathVariable("tableId") UUID tableId,
+            @Valid @RequestBody TableUpdatingRequest request
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        tableService.updateTable(
+                            authentication.getName(),
+                                tableId,
+                                request
+                        )
+                );
+    }
+
+    @PatchMapping("/{tableId}/scope")
+    public ResponseEntity<TableEntityResponse> updateScopeTable(
+            JwtAuthenticationToken authentication,
+            @PathVariable("tableId") UUID tableId,
+            @Valid @RequestBody TableScopeRequest request
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        tableService.updateScopeTable(
+                                authentication.getName(),
+                                tableId,
+                                request
+                        )
+                );
+    }
+
+    @DeleteMapping("/{tableId}")
+    public ResponseEntity<Void> deleteTable(
+            JwtAuthenticationToken authentication,
+            @PathVariable("tableId") UUID tableId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        tableService.deleteTable(authentication.getName(), tableId);
         return ResponseEntity
                 .noContent()
                 .build();
