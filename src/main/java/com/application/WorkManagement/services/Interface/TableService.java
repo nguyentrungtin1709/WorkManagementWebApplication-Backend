@@ -1,8 +1,10 @@
 package com.application.WorkManagement.services.Interface;
 
+import com.application.WorkManagement.dto.requests.table.TableMemberRequest;
 import com.application.WorkManagement.dto.requests.table.TableScopeRequest;
 import com.application.WorkManagement.dto.requests.table.TableUpdatingRequest;
 import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
+import com.application.WorkManagement.dto.responses.table.TableMemberResponse;
 import com.application.WorkManagement.dto.responses.table.TableStarResponse;
 import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
 import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
@@ -28,4 +30,15 @@ public interface TableService {
     TableEntityResponse updateScopeTable(String accountId, UUID tableId, TableScopeRequest request) throws DataNotFoundException, CustomAccessDeniedException;
 
     void deleteTable(String accountId, UUID tableId) throws DataNotFoundException, CustomAccessDeniedException;
+
+    TableMemberResponse inviteMemberIntoTable(String accountId, UUID tableId, TableMemberRequest request) throws DataNotFoundException, CustomAccessDeniedException, CustomDuplicateException;
+
+    TableMemberResponse joinInTable(String accountId, UUID tableId) throws DataNotFoundException, CustomAccessDeniedException, CustomDuplicateException;
+
+    List<TableMemberResponse> readTableMemberList(String accountId, UUID tableId) throws DataNotFoundException, CustomAccessDeniedException;
+
+    TableMemberResponse updateRoleForMember(String accountId, UUID tableId, TableMemberRequest request) throws DataNotFoundException, CustomAccessDeniedException;
+
+    void deleteMemberFromTable(String accountId, UUID tableId, UUID memberId) throws DataNotFoundException, CustomAccessDeniedException;
+
 }

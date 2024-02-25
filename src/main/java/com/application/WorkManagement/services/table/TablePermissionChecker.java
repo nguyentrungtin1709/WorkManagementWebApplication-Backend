@@ -36,5 +36,15 @@ public class TablePermissionChecker {
         tableRoleChecker.checkAdminRoleInTable(account, table);
     }
 
+    public void checkAccountIsMemberOfWorkspaceContainTable(
+            Account account,
+            TableEntity table
+    ) throws CustomAccessDeniedException {
+        tableRoleChecker.checkHasAnyRoleInWorkspace(account, table.getWorkspace());
+    }
+
+    public void checkJoinInPermission(Account account, TableEntity table) throws CustomAccessDeniedException {
+        tableRoleChecker.checkAdminRoleInWorkspace(account, table.getWorkspace());
+    }
 
 }

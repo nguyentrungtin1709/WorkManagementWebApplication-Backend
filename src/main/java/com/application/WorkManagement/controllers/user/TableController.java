@@ -1,9 +1,11 @@
 package com.application.WorkManagement.controllers.user;
 
+import com.application.WorkManagement.dto.requests.table.TableMemberRequest;
 import com.application.WorkManagement.dto.requests.table.TableScopeRequest;
 import com.application.WorkManagement.dto.requests.table.TableStarRequest;
 import com.application.WorkManagement.dto.requests.table.TableUpdatingRequest;
 import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
+import com.application.WorkManagement.dto.responses.table.TableMemberResponse;
 import com.application.WorkManagement.dto.responses.table.TableStarResponse;
 import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
 import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
@@ -144,6 +146,90 @@ public class TableController {
             @PathVariable("tableId") UUID tableId
     ) throws DataNotFoundException, CustomAccessDeniedException {
         tableService.deleteTable(authentication.getName(), tableId);
+        return ResponseEntity
+                .noContent()
+                .build();
+    }
+
+    @PostMapping("/{tableId}/members")
+    public ResponseEntity<TableMemberResponse> inviteMemberIntoTable(
+            JwtAuthenticationToken authentication,
+            @PathVariable("tableId") UUID tableId,
+            @Valid @RequestBody TableMemberRequest request
+    ) throws DataNotFoundException, CustomAccessDeniedException, CustomDuplicateException {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        tableService.inviteMemberIntoTable(
+                                authentication.getName(),
+                                tableId,
+                                request
+                        )
+                );
+    }
+
+    @PostMapping("/{tableId}/members/participation")
+    public ResponseEntity<TableMemberResponse> joinInTable(
+            JwtAuthenticationToken authentication,
+            @PathVariable("tableId") UUID tableId
+    ) throws DataNotFoundException, CustomDuplicateException, CustomAccessDeniedException {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        tableService.joinInTable(
+                            authentication.getName(),
+                            tableId
+                        )
+                );
+    }
+
+    @GetMapping("/{tableId}/members")
+    public ResponseEntity<List<TableMemberResponse>> readTableMemberList(
+        JwtAuthenticationToken authentication,
+        @PathVariable("tableId") UUID tableId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        tableService.readTableMemberList(
+                                authentication.getName(),
+                                tableId
+                        )
+                );
+    }
+
+    @PatchMapping("/{tableId}/members")
+    public ResponseEntity<TableMemberResponse> updateRoleForMember(
+            JwtAuthenticationToken authentication,
+            @PathVariable("tableId") UUID tableId,
+            @Valid @RequestBody TableMemberRequest request
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        tableService.updateRoleForMember(
+                                authentication.getName(),
+                                tableId,
+                                request
+                        )
+                );
+    }
+
+    @DeleteMapping("/{tableId}/members/{memberId}")
+    public ResponseEntity<Void> deleteMemberFromTable(
+            JwtAuthenticationToken authentication,
+            @PathVariable("tableId") UUID tableId,
+            @PathVariable("memberId") UUID memberId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        tableService.deleteMemberFromTable(
+                authentication.getName(),
+                tableId,
+                memberId
+        );
         return ResponseEntity
                 .noContent()
                 .build();

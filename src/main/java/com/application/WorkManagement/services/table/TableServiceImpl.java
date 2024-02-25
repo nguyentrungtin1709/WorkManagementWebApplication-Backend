@@ -1,20 +1,23 @@
 package com.application.WorkManagement.services.table;
 
 import com.application.WorkManagement.dto.mappers.table.TableEntityMapper;
+import com.application.WorkManagement.dto.mappers.table.TableMemberMapper;
 import com.application.WorkManagement.dto.mappers.table.TableStarMapper;
+import com.application.WorkManagement.dto.requests.table.TableMemberRequest;
 import com.application.WorkManagement.dto.requests.table.TableScopeRequest;
 import com.application.WorkManagement.dto.requests.table.TableUpdatingRequest;
 import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
+import com.application.WorkManagement.dto.responses.table.TableMemberResponse;
 import com.application.WorkManagement.dto.responses.table.TableStarResponse;
 import com.application.WorkManagement.entities.*;
 import com.application.WorkManagement.enums.ActivityType;
+import com.application.WorkManagement.enums.TableRole;
 import com.application.WorkManagement.enums.TableScope;
 import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
 import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
 import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
 import com.application.WorkManagement.repositories.*;
 import com.application.WorkManagement.services.Interface.TableService;
-import jakarta.persistence.Table;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,10 +29,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class TableServiceImpl implements TableService {
-
-    private final WorkspaceRepository workspaceRepository;
-
-    private final WorkspaceMemberRepository workspaceMemberRepository;
 
     private final TableRepository tableRepository;
 
@@ -47,20 +46,18 @@ public class TableServiceImpl implements TableService {
 
     private final TableStarMapper tableStarMapper;
 
+    private final TableMemberMapper tableMemberMapper;
+
     @Autowired
     public TableServiceImpl(
-            WorkspaceRepository workspaceRepository,
-            WorkspaceMemberRepository workspaceMemberRepository,
             TableRepository tableRepository,
             TableMemberRepository tableMemberRepository,
             TableStarRepository tableStarRepository,
             AccountRepository accountRepository,
             ActivityRepository activityRepository,
             TablePermissionChecker tablePermissionChecker,
-            TableEntityMapper tableEntityMapper, TableStarMapper tableStarMapper
+            TableEntityMapper tableEntityMapper, TableStarMapper tableStarMapper, TableMemberMapper tableMemberMapper
     ) {
-        this.workspaceRepository = workspaceRepository;
-        this.workspaceMemberRepository = workspaceMemberRepository;
         this.tableRepository = tableRepository;
         this.tableMemberRepository = tableMemberRepository;
         this.tableStarRepository = tableStarRepository;
@@ -69,6 +66,7 @@ public class TableServiceImpl implements TableService {
         this.tablePermissionChecker = tablePermissionChecker;
         this.tableEntityMapper = tableEntityMapper;
         this.tableStarMapper = tableStarMapper;
+        this.tableMemberMapper = tableMemberMapper;
     }
 
 
@@ -224,6 +222,99 @@ public class TableServiceImpl implements TableService {
         tableRepository.deleteById(table.getUuid());
     }
 
+    @Override
+    public TableMemberResponse inviteMemberIntoTable(
+            String accountId,
+            UUID tableId,
+            TableMemberRequest request
+    ) throws DataNotFoundException, CustomAccessDeniedException, CustomDuplicateException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        TableEntity table = getTableFromId(tableId);
+        Account member = getAccountFromId(request.getAccountId());
+        tablePermissionChecker.checkManagePermission(account, table);
+        tablePermissionChecker.checkAccountIsMemberOfWorkspaceContainTable(member, table);
+        checkAccountHaveBeenMemberOfTable(member, table);
+        return tableMemberMapper.apply(
+                tableMemberRepository.save(
+                        TableMember.builder()
+                                .account(member)
+                                .table(table)
+                                .tableRole(request.getRole())
+                                .build()
+                )
+        );
+    }
+
+    @Override
+    public TableMemberResponse joinInTable(
+            String accountId,
+            UUID tableId
+    ) throws DataNotFoundException, CustomAccessDeniedException, CustomDuplicateException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        TableEntity table = getTableFromId(tableId);
+        tablePermissionChecker.checkJoinInPermission(account, table);
+        checkAccountHaveBeenMemberOfTable(account, table);
+        return tableMemberMapper.apply(
+                tableMemberRepository.save(
+                        TableMember
+                                .builder()
+                                .account(account)
+                                .table(table)
+                                .tableRole(TableRole.ADMIN)
+                                .build()
+                )
+        );
+    }
+
+    @Override
+    public List<TableMemberResponse> readTableMemberList(
+            String accountId,
+            UUID tableId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        TableEntity table = getTableFromId(tableId);
+        tablePermissionChecker.checkReadPermission(account, table);
+        return tableMemberRepository
+                .findTableMembersByTableOrderByTableRoleDesc(table)
+                .stream()
+                .map(tableMemberMapper)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public TableMemberResponse updateRoleForMember(String accountId, UUID tableId, TableMemberRequest request) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        TableEntity table = getTableFromId(tableId);
+        Account member = getAccountFromId(request.getAccountId());
+        tablePermissionChecker.checkManagePermission(account, table);
+        TableMember tableMember = tableMemberRepository
+                .findTableMemberByAccountAndTable(member, table)
+                .orElseThrow(() -> new DataNotFoundException("Tài khoản không là thành viên của bảng"));
+        tableMember.setTableRole(request.getRole());
+        return tableMemberMapper.apply(
+                tableMemberRepository.save(tableMember)
+        );
+    }
+
+    @Override
+    @Transactional
+    public void deleteMemberFromTable(
+            String accountId,
+            UUID tableId,
+            UUID memberId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        TableEntity table = getTableFromId(tableId);
+        Account member = getAccountFromId(memberId);
+        if (!account.getUuid().equals(member.getUuid())){
+            tablePermissionChecker.checkManagePermission(account, table);
+        }
+        tableMemberRepository.deleteTableMemberByAccountAndTable(member, table);
+        tableStarRepository.deleteTableStarByAccountAndTable(member, table);
+        tableMemberRepository.deleteCardMemberByAccount_UuidAndTable_Uuid(member.getUuid(), table.getUuid());
+        tableMemberRepository.deleteCardFollowByAccount_UuidAndTable_Uuid(member.getUuid(), table.getUuid());
+    }
+
 
     private Account getAccountFromAuthenticationName(String uuid) throws DataNotFoundException {
         return accountRepository
@@ -231,9 +322,22 @@ public class TableServiceImpl implements TableService {
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy tài khoản"));
     }
 
+    private Account getAccountFromId(UUID accountId) throws DataNotFoundException {
+        return accountRepository
+                .findById(accountId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy tài khoản"));
+    }
+
     public TableEntity getTableFromId(UUID tableId) throws DataNotFoundException {
         return tableRepository
                 .findById(tableId)
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy bảng công việc"));
+    }
+
+    private void checkAccountHaveBeenMemberOfTable(Account account, TableEntity table) throws CustomDuplicateException {
+        Boolean isMember = tableMemberRepository.existsTableMemberByAccountAndTable(account, table);
+        if (isMember){
+            throw new CustomDuplicateException("Tài khoản đã là thành viên của bảng");
+        }
     }
 }
