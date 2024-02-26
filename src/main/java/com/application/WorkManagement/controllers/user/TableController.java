@@ -4,6 +4,7 @@ import com.application.WorkManagement.dto.requests.table.TableMemberRequest;
 import com.application.WorkManagement.dto.requests.table.TableScopeRequest;
 import com.application.WorkManagement.dto.requests.table.TableStarRequest;
 import com.application.WorkManagement.dto.requests.table.TableUpdatingRequest;
+import com.application.WorkManagement.dto.responses.table.TableActivityResponse;
 import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
 import com.application.WorkManagement.dto.responses.table.TableMemberResponse;
 import com.application.WorkManagement.dto.responses.table.TableStarResponse;
@@ -233,5 +234,21 @@ public class TableController {
         return ResponseEntity
                 .noContent()
                 .build();
+    }
+
+    @GetMapping("/{tableId}/activities")
+    public ResponseEntity<List<TableActivityResponse>> readActivitiesInTable(
+            JwtAuthenticationToken authentication,
+            @PathVariable("tableId") UUID tableId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        tableService.readActivitiesInTable(
+                                authentication.getName(),
+                                tableId
+                        )
+                );
     }
 }

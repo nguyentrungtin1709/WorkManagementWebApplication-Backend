@@ -3,6 +3,7 @@ package com.application.WorkManagement.services.Interface;
 import com.application.WorkManagement.dto.requests.table.TableMemberRequest;
 import com.application.WorkManagement.dto.requests.table.TableScopeRequest;
 import com.application.WorkManagement.dto.requests.table.TableUpdatingRequest;
+import com.application.WorkManagement.dto.responses.table.TableActivityResponse;
 import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
 import com.application.WorkManagement.dto.responses.table.TableMemberResponse;
 import com.application.WorkManagement.dto.responses.table.TableStarResponse;
@@ -40,5 +41,7 @@ public interface TableService {
     TableMemberResponse updateRoleForMember(String accountId, UUID tableId, TableMemberRequest request) throws DataNotFoundException, CustomAccessDeniedException;
 
     void deleteMemberFromTable(String accountId, UUID tableId, UUID memberId) throws DataNotFoundException, CustomAccessDeniedException;
+
+    List<TableActivityResponse> readActivitiesInTable(String accountId, UUID tableId) throws DataNotFoundException, CustomAccessDeniedException;
 
 }

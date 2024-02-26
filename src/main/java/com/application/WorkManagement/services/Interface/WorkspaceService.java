@@ -8,6 +8,7 @@ import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
 import com.application.WorkManagement.dto.responses.workspace.InviteCodeResponse;
 import com.application.WorkManagement.dto.responses.workspace.MemberResponse;
 import com.application.WorkManagement.dto.responses.workspace.WorkspaceResponse;
+import com.application.WorkManagement.enums.TableSortType;
 import com.application.WorkManagement.exceptions.custom.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -53,5 +54,7 @@ public interface WorkspaceService {
     WorkspaceResponse updateWorkspaceBackground(String accountId, UUID workspaceId, MultipartFile file) throws DataNotFoundException, CustomAccessDeniedException, URISyntaxException, InvalidFileExtensionException, IOException, EmptyImageException;
 
     WorkspaceResponse deleteWorkspaceBackground(String accountId, UUID workspaceId) throws DataNotFoundException, CustomAccessDeniedException, URISyntaxException;
+
+    List<TableEntityResponse> readTableListInWorkspaceByKeywordAndSortType(String accountId, UUID workspaceId, String keyword, TableSortType sortType) throws DataNotFoundException, CustomAccessDeniedException;
 
 }

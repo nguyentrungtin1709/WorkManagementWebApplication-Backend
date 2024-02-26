@@ -15,6 +15,7 @@ import com.application.WorkManagement.dto.responses.workspace.MemberResponse;
 import com.application.WorkManagement.dto.responses.workspace.WorkspaceResponse;
 import com.application.WorkManagement.entities.*;
 import com.application.WorkManagement.enums.TableRole;
+import com.application.WorkManagement.enums.TableSortType;
 import com.application.WorkManagement.enums.WorkspaceRole;
 import com.application.WorkManagement.exceptions.custom.*;
 import com.application.WorkManagement.repositories.*;
@@ -28,9 +29,11 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Service
@@ -474,6 +477,30 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                             .build();
                 })
                 .map(tableEntityMapper)
+                .collect(Collectors.toList());
+    }
+
+    public List<TableEntityResponse> readTableListInWorkspaceByKeywordAndSortType(
+            String accountId,
+            UUID workspaceId,
+            String keyword,
+            TableSortType sortType
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        return readTablesInWorkspace(accountId, workspaceId)
+                .stream()
+                .filter(table -> {
+                    if (keyword == null){
+                        return true;
+                    }
+                    return table.getName().contains(keyword);
+                })
+                .sorted((table, other) -> {
+                    Comparator<String> comparator = Comparator.naturalOrder();
+                    if (sortType.equals(TableSortType.DECREASE)){
+                        comparator = Comparator.reverseOrder();
+                    }
+                    return comparator.compare(table.getName(), other.getName());
+                })
                 .collect(Collectors.toList());
     }
 

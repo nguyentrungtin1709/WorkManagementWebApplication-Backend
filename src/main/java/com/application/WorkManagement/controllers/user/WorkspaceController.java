@@ -8,6 +8,7 @@ import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
 import com.application.WorkManagement.dto.responses.workspace.InviteCodeResponse;
 import com.application.WorkManagement.dto.responses.workspace.MemberResponse;
 import com.application.WorkManagement.dto.responses.workspace.WorkspaceResponse;
+import com.application.WorkManagement.enums.TableSortType;
 import com.application.WorkManagement.exceptions.custom.*;
 import com.application.WorkManagement.services.Interface.WorkspaceService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -325,15 +326,19 @@ public class WorkspaceController {
     @GetMapping("/{workspaceId}/tables")
     public ResponseEntity<List<TableEntityResponse>> readTablesInWorkspace(
             JwtAuthenticationToken authentication,
-            @PathVariable("workspaceId") UUID workspaceId
+            @PathVariable("workspaceId") UUID workspaceId,
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "sort", defaultValue = "INCREASE") TableSortType sortType
     ) throws DataNotFoundException, CustomAccessDeniedException {
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(
-                        workspaceService.readTablesInWorkspace(
-                                  authentication.getName(),
-                                  workspaceId
+                        workspaceService.readTableListInWorkspaceByKeywordAndSortType(
+                                authentication.getName(),
+                                workspaceId,
+                                keyword,
+                                sortType
                         )
                 );
     }

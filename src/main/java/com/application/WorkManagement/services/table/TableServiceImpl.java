@@ -1,11 +1,13 @@
 package com.application.WorkManagement.services.table;
 
+import com.application.WorkManagement.dto.mappers.table.TableActivityMapper;
 import com.application.WorkManagement.dto.mappers.table.TableEntityMapper;
 import com.application.WorkManagement.dto.mappers.table.TableMemberMapper;
 import com.application.WorkManagement.dto.mappers.table.TableStarMapper;
 import com.application.WorkManagement.dto.requests.table.TableMemberRequest;
 import com.application.WorkManagement.dto.requests.table.TableScopeRequest;
 import com.application.WorkManagement.dto.requests.table.TableUpdatingRequest;
+import com.application.WorkManagement.dto.responses.table.TableActivityResponse;
 import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
 import com.application.WorkManagement.dto.responses.table.TableMemberResponse;
 import com.application.WorkManagement.dto.responses.table.TableStarResponse;
@@ -22,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -48,6 +51,8 @@ public class TableServiceImpl implements TableService {
 
     private final TableMemberMapper tableMemberMapper;
 
+    private final TableActivityMapper tableActivityMapper;
+
     @Autowired
     public TableServiceImpl(
             TableRepository tableRepository,
@@ -56,7 +61,10 @@ public class TableServiceImpl implements TableService {
             AccountRepository accountRepository,
             ActivityRepository activityRepository,
             TablePermissionChecker tablePermissionChecker,
-            TableEntityMapper tableEntityMapper, TableStarMapper tableStarMapper, TableMemberMapper tableMemberMapper
+            TableEntityMapper tableEntityMapper,
+            TableStarMapper tableStarMapper,
+            TableMemberMapper tableMemberMapper,
+            TableActivityMapper tableActivityMapper
     ) {
         this.tableRepository = tableRepository;
         this.tableMemberRepository = tableMemberRepository;
@@ -67,6 +75,7 @@ public class TableServiceImpl implements TableService {
         this.tableEntityMapper = tableEntityMapper;
         this.tableStarMapper = tableStarMapper;
         this.tableMemberMapper = tableMemberMapper;
+        this.tableActivityMapper = tableActivityMapper;
     }
 
 
@@ -201,6 +210,7 @@ public class TableServiceImpl implements TableService {
                 .table(table)
                 .category(null)
                 .card(null)
+                .createdAt(LocalDateTime.now())
                 .build()
         );
         return tableEntityMapper.apply(
@@ -313,6 +323,21 @@ public class TableServiceImpl implements TableService {
         tableStarRepository.deleteTableStarByAccountAndTable(member, table);
         tableMemberRepository.deleteCardMemberByAccount_UuidAndTable_Uuid(member.getUuid(), table.getUuid());
         tableMemberRepository.deleteCardFollowByAccount_UuidAndTable_Uuid(member.getUuid(), table.getUuid());
+    }
+
+    @Override
+    public List<TableActivityResponse> readActivitiesInTable(
+            String accountId,
+            UUID tableId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        TableEntity table = getTableFromId(tableId);
+        tablePermissionChecker.checkReadPermission(account, table);
+        return activityRepository
+                .findActivitiesByTable(table)
+                .stream()
+                .map(tableActivityMapper)
+                .collect(Collectors.toList());
     }
 
 

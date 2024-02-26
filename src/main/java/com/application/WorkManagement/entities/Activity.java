@@ -32,8 +32,7 @@ public class Activity {
     )
     @Enumerated(value = EnumType.STRING)
     private ActivityType activityType;
-
-    @CreationTimestamp
+    
     @Column(
             name = "hd_ngay_tao"
     )
@@ -64,4 +63,5 @@ public class Activity {
             name = "the_ma_so"
     )
     private Card card;
+
 }
