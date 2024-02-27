@@ -76,6 +76,12 @@ public class WebSecurity {
                                 userRoleMapper.apply(UserRole.USER.name()),
                                 userRoleMapper.apply(UserRole.ADMIN.name())
                         )
+                        .requestMatchers(
+                                "/api/v1/admin/**"
+                        )
+                        .hasAuthority(
+                                userRoleMapper.apply(UserRole.ADMIN.name())
+                        )
                         .anyRequest()
                         .authenticated()
             )

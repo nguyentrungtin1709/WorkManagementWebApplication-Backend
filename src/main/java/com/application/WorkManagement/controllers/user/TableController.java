@@ -12,6 +12,7 @@ import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedExcept
 import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
 import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
 import com.application.WorkManagement.services.Interface.TableService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -24,6 +25,9 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/tables")
+@SecurityRequirement(
+        name = "JWT-BEARER"
+)
 public class TableController {
 
     private final TableService tableService;
