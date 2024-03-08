@@ -22,11 +22,11 @@ import java.util.UUID;
 @SecurityRequirement(
         name = "JWT-BEARER"
 )
-public class ImageGalleryController {
+public class ImageGalleryManagementController {
 
     private final ImageGalleryService imageGalleryService;
 
-    public ImageGalleryController(ImageGalleryService imageGalleryService) {
+    public ImageGalleryManagementController(ImageGalleryService imageGalleryService) {
         this.imageGalleryService = imageGalleryService;
     }
 

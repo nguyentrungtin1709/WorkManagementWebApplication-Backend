@@ -4,6 +4,7 @@ import com.application.WorkManagement.dto.mappers.table.TableActivityMapper;
 import com.application.WorkManagement.dto.mappers.table.TableEntityMapper;
 import com.application.WorkManagement.dto.mappers.table.TableMemberMapper;
 import com.application.WorkManagement.dto.mappers.table.TableStarMapper;
+import com.application.WorkManagement.dto.requests.table.ImageGalleryRequest;
 import com.application.WorkManagement.dto.requests.table.TableMemberRequest;
 import com.application.WorkManagement.dto.requests.table.TableScopeRequest;
 import com.application.WorkManagement.dto.requests.table.TableUpdatingRequest;
@@ -53,6 +54,8 @@ public class TableServiceImpl implements TableService {
 
     private final TableActivityMapper tableActivityMapper;
 
+    private final ImageGalleryRepository imageGalleryRepository;
+
     @Autowired
     public TableServiceImpl(
             TableRepository tableRepository,
@@ -64,7 +67,8 @@ public class TableServiceImpl implements TableService {
             TableEntityMapper tableEntityMapper,
             TableStarMapper tableStarMapper,
             TableMemberMapper tableMemberMapper,
-            TableActivityMapper tableActivityMapper
+            TableActivityMapper tableActivityMapper,
+            ImageGalleryRepository imageGalleryRepository
     ) {
         this.tableRepository = tableRepository;
         this.tableMemberRepository = tableMemberRepository;
@@ -76,6 +80,7 @@ public class TableServiceImpl implements TableService {
         this.tableStarMapper = tableStarMapper;
         this.tableMemberMapper = tableMemberMapper;
         this.tableActivityMapper = tableActivityMapper;
+        this.imageGalleryRepository = imageGalleryRepository;
     }
 
 
@@ -338,6 +343,44 @@ public class TableServiceImpl implements TableService {
                 .stream()
                 .map(tableActivityMapper)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public TableEntityResponse updateBackgroundTable(
+            String accountId,
+            UUID tableId,
+            ImageGalleryRequest request
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        TableEntity table = getTableFromId(tableId);
+        tablePermissionChecker.checkManagePermission(account, table);
+        ImageGallery image = imageGalleryRepository
+                .findById(request.getId())
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy hình ảnh"));
+        table.setBackground(image.getImageUri());
+        table = tableRepository.save(table);
+        return tableEntityMapper.apply(
+                tableMemberRepository
+                        .findTableMemberByAccountAndTable(account, table)
+                        .orElseThrow(() -> new DataNotFoundException("Tài khoản không là thành viên của bảng"))
+        );
+    }
+
+    @Override
+    public TableEntityResponse deleteBackgroundTable(
+            String accountId,
+            UUID tableId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        TableEntity table = getTableFromId(tableId);
+        tablePermissionChecker.checkManagePermission(account, table);
+        table.setBackground(null);
+        table = tableRepository.save(table);
+        return tableEntityMapper.apply(
+                tableMemberRepository
+                        .findTableMemberByAccountAndTable(account, table)
+                        .orElseThrow(() -> new DataNotFoundException("Tài khoản không là thành viên của bảng"))
+        );
     }
 
 

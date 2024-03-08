@@ -1,5 +1,6 @@
 package com.application.WorkManagement.services.Interface;
 
+import com.application.WorkManagement.dto.requests.table.ImageGalleryRequest;
 import com.application.WorkManagement.dto.requests.table.TableMemberRequest;
 import com.application.WorkManagement.dto.requests.table.TableScopeRequest;
 import com.application.WorkManagement.dto.requests.table.TableUpdatingRequest;
@@ -44,4 +45,7 @@ public interface TableService {
 
     List<TableActivityResponse> readActivitiesInTable(String accountId, UUID tableId) throws DataNotFoundException, CustomAccessDeniedException;
 
+    TableEntityResponse updateBackgroundTable(String accountId, UUID tableId, ImageGalleryRequest request) throws DataNotFoundException, CustomAccessDeniedException;
+
+    TableEntityResponse deleteBackgroundTable(String accountId, UUID tableId) throws DataNotFoundException, CustomAccessDeniedException;
 }

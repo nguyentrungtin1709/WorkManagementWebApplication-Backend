@@ -1,9 +1,6 @@
 package com.application.WorkManagement.controllers.user;
 
-import com.application.WorkManagement.dto.requests.table.TableMemberRequest;
-import com.application.WorkManagement.dto.requests.table.TableScopeRequest;
-import com.application.WorkManagement.dto.requests.table.TableStarRequest;
-import com.application.WorkManagement.dto.requests.table.TableUpdatingRequest;
+import com.application.WorkManagement.dto.requests.table.*;
 import com.application.WorkManagement.dto.responses.table.TableActivityResponse;
 import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
 import com.application.WorkManagement.dto.responses.table.TableMemberResponse;
@@ -250,6 +247,40 @@ public class TableController {
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(
                         tableService.readActivitiesInTable(
+                                authentication.getName(),
+                                tableId
+                        )
+                );
+    }
+
+    @PatchMapping("/{tableId}/background")
+    public ResponseEntity<TableEntityResponse> updateBackgroundTable(
+            @PathVariable("tableId") UUID tableId,
+            JwtAuthenticationToken authentication,
+            @Valid @RequestBody ImageGalleryRequest request
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        tableService.updateBackgroundTable(
+                                authentication.getName(),
+                                tableId,
+                                request
+                        )
+                );
+    }
+
+    @DeleteMapping("/{tableId}/background")
+    public ResponseEntity<TableEntityResponse> deleteBackgroundTable(
+            @PathVariable("tableId") UUID tableId,
+            JwtAuthenticationToken authentication
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        tableService.deleteBackgroundTable(
                                 authentication.getName(),
                                 tableId
                         )
