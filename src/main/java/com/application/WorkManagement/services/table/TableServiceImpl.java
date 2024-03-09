@@ -1,13 +1,16 @@
 package com.application.WorkManagement.services.table;
 
+import com.application.WorkManagement.dto.mappers.category.CategoryMapper;
 import com.application.WorkManagement.dto.mappers.table.TableActivityMapper;
 import com.application.WorkManagement.dto.mappers.table.TableEntityMapper;
 import com.application.WorkManagement.dto.mappers.table.TableMemberMapper;
 import com.application.WorkManagement.dto.mappers.table.TableStarMapper;
+import com.application.WorkManagement.dto.requests.category.CategoryRequest;
 import com.application.WorkManagement.dto.requests.table.ImageGalleryRequest;
 import com.application.WorkManagement.dto.requests.table.TableMemberRequest;
 import com.application.WorkManagement.dto.requests.table.TableScopeRequest;
 import com.application.WorkManagement.dto.requests.table.TableUpdatingRequest;
+import com.application.WorkManagement.dto.responses.category.CategoryResponse;
 import com.application.WorkManagement.dto.responses.table.TableActivityResponse;
 import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
 import com.application.WorkManagement.dto.responses.table.TableMemberResponse;
@@ -56,6 +59,10 @@ public class TableServiceImpl implements TableService {
 
     private final ImageGalleryRepository imageGalleryRepository;
 
+    private final CategoryRepository categoryRepository;
+
+    private final CategoryMapper categoryMapper;
+
     @Autowired
     public TableServiceImpl(
             TableRepository tableRepository,
@@ -68,7 +75,9 @@ public class TableServiceImpl implements TableService {
             TableStarMapper tableStarMapper,
             TableMemberMapper tableMemberMapper,
             TableActivityMapper tableActivityMapper,
-            ImageGalleryRepository imageGalleryRepository
+            ImageGalleryRepository imageGalleryRepository,
+            CategoryRepository categoryRepository,
+            CategoryMapper categoryMapper
     ) {
         this.tableRepository = tableRepository;
         this.tableMemberRepository = tableMemberRepository;
@@ -81,6 +90,8 @@ public class TableServiceImpl implements TableService {
         this.tableMemberMapper = tableMemberMapper;
         this.tableActivityMapper = tableActivityMapper;
         this.imageGalleryRepository = imageGalleryRepository;
+        this.categoryRepository = categoryRepository;
+        this.categoryMapper = categoryMapper;
     }
 
 
@@ -339,7 +350,7 @@ public class TableServiceImpl implements TableService {
         TableEntity table = getTableFromId(tableId);
         tablePermissionChecker.checkReadPermission(account, table);
         return activityRepository
-                .findActivitiesByTable(table)
+                .findActivitiesByTableOrderByCreatedAtDesc(table)
                 .stream()
                 .map(tableActivityMapper)
                 .collect(Collectors.toList());
@@ -381,6 +392,60 @@ public class TableServiceImpl implements TableService {
                         .findTableMemberByAccountAndTable(account, table)
                         .orElseThrow(() -> new DataNotFoundException("Tài khoản không là thành viên của bảng"))
         );
+    }
+
+    @Override
+    public CategoryResponse createCategory(
+            String accountId,
+            UUID tableId,
+            CategoryRequest request
+    ) throws DataNotFoundException, CustomAccessDeniedException, CustomDuplicateException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        TableEntity table = getTableFromId(tableId);
+        tablePermissionChecker.checkManageComponentsInTablePermission(account, table);
+        if (categoryRepository
+                .existsCategoryByTableAndName(table, request.getName())
+        ){
+            throw new CustomDuplicateException("Danh mục đã tồn tại");
+        }
+        Category category = categoryRepository.save(
+                Category
+                    .builder()
+                    .name(request.getName())
+                    .numberOfCards(0)
+                    .account(account)
+                    .table(table)
+                    .build()
+        );
+        activityRepository.save(
+                Activity
+                        .builder()
+                        .activityType(ActivityType.CREATE_CATEGORY)
+                        .createdAt(LocalDateTime.now())
+                        .account(account)
+                        .table(category.getTable())
+                        .category(category)
+                        .build()
+
+        );
+        return categoryMapper.apply(
+            category
+        );
+    }
+
+    @Override
+    public List<CategoryResponse> readCategoryListInTable(
+            String accountId,
+            UUID tableId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        TableEntity table = getTableFromId(tableId);
+        tablePermissionChecker.checkReadPermission(account, table);
+        return categoryRepository
+                .findCategoriesByTableOrderByCreatedAtDesc(table)
+                .stream()
+                .map(categoryMapper)
+                .collect(Collectors.toList());
     }
 
 

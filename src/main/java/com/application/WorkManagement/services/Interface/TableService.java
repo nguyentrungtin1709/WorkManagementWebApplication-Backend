@@ -1,9 +1,11 @@
 package com.application.WorkManagement.services.Interface;
 
+import com.application.WorkManagement.dto.requests.category.CategoryRequest;
 import com.application.WorkManagement.dto.requests.table.ImageGalleryRequest;
 import com.application.WorkManagement.dto.requests.table.TableMemberRequest;
 import com.application.WorkManagement.dto.requests.table.TableScopeRequest;
 import com.application.WorkManagement.dto.requests.table.TableUpdatingRequest;
+import com.application.WorkManagement.dto.responses.category.CategoryResponse;
 import com.application.WorkManagement.dto.responses.table.TableActivityResponse;
 import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
 import com.application.WorkManagement.dto.responses.table.TableMemberResponse;
@@ -48,4 +50,9 @@ public interface TableService {
     TableEntityResponse updateBackgroundTable(String accountId, UUID tableId, ImageGalleryRequest request) throws DataNotFoundException, CustomAccessDeniedException;
 
     TableEntityResponse deleteBackgroundTable(String accountId, UUID tableId) throws DataNotFoundException, CustomAccessDeniedException;
+
+    CategoryResponse createCategory(String accountId, UUID tableId, CategoryRequest request) throws DataNotFoundException, CustomAccessDeniedException, CustomDuplicateException;
+
+    List<CategoryResponse> readCategoryListInTable(String accountId, UUID tableId) throws DataNotFoundException, CustomAccessDeniedException;
+
 }

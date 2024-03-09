@@ -11,6 +11,6 @@ import java.util.UUID;
 @Repository
 public interface ActivityRepository extends JpaRepository<Activity, UUID> {
 
-    List<Activity> findActivitiesByTable(TableEntity table);
+    List<Activity> findActivitiesByTableOrderByCreatedAtDesc(TableEntity table);
 
 }

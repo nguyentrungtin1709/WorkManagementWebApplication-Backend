@@ -1,6 +1,8 @@
 package com.application.WorkManagement.controllers.user;
 
+import com.application.WorkManagement.dto.requests.category.CategoryRequest;
 import com.application.WorkManagement.dto.requests.table.*;
+import com.application.WorkManagement.dto.responses.category.CategoryResponse;
 import com.application.WorkManagement.dto.responses.table.TableActivityResponse;
 import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
 import com.application.WorkManagement.dto.responses.table.TableMemberResponse;
@@ -286,4 +288,39 @@ public class TableController {
                         )
                 );
     }
+
+    @PostMapping("/{tableId}/categories")
+    public ResponseEntity<CategoryResponse> createCategory(
+            JwtAuthenticationToken authentication,
+            @PathVariable("tableId") UUID tableId,
+            @Valid @RequestBody CategoryRequest request
+    ) throws DataNotFoundException, CustomDuplicateException, CustomAccessDeniedException {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        tableService.createCategory(
+                                authentication.getName(),
+                                tableId,
+                                request
+                        )
+                );
+    }
+
+    @GetMapping("/{tableId}/categories")
+    public ResponseEntity<List<CategoryResponse>> readCategoryListInTable(
+            JwtAuthenticationToken authentication,
+            @PathVariable("tableId") UUID tableId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        tableService.readCategoryListInTable(
+                                authentication.getName(),
+                                tableId
+                        )
+                );
+    }
+
 }
