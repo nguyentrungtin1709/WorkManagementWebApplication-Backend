@@ -1,17 +1,21 @@
 package com.application.WorkManagement.controllers.user;
 
+import com.application.WorkManagement.dto.requests.card.CardRequest;
 import com.application.WorkManagement.dto.requests.category.CategoryRequest;
+import com.application.WorkManagement.dto.responses.card.CardListResponse;
 import com.application.WorkManagement.dto.responses.category.CategoryResponse;
 import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
 import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
 import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
 import com.application.WorkManagement.services.Interface.CategoryService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -70,6 +74,40 @@ public class CategoryController {
         return ResponseEntity
                 .noContent()
                 .build();
+    }
+
+    @PostMapping("/{categoryId}/cards")
+    public ResponseEntity<CardListResponse> createCardInCategory(
+            @PathVariable("categoryId") UUID categoryId,
+            JwtAuthenticationToken authentication,
+            @Valid @RequestBody CardRequest request
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                    categoryService.createCardInCategory(
+                            authentication.getName(),
+                            categoryId,
+                            request
+                    )
+                );
+    }
+
+    @GetMapping("/{categoryId}/cards")
+    public ResponseEntity<List<CardListResponse>> readCardsInCategory(
+        JwtAuthenticationToken authentication,
+        @PathVariable("categoryId") UUID categoryId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        categoryService.readCardsInCategory(
+                                authentication.getName(),
+                                categoryId
+                        )
+                );
     }
 
 }

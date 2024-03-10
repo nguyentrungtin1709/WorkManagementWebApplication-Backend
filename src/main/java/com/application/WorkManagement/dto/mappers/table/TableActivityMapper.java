@@ -91,6 +91,9 @@ public class TableActivityMapper implements Function<Activity, TableActivityResp
             case REMINDER_DEADLINE -> {
                 yield String.format("Thẻ %s trong danh mục %s sắp hết hạn", activity.getCard().getName(), activity.getCategory().getName());
             }
+            case NOTIFICATION_DEADLINE -> {
+                yield String.format("Thẻ %s trong danh mục %s đã hết hạn", activity.getCard().getName(), activity.getCategory().getName());
+            }
         };
         activityResponse.setMessage(message);
         return activityResponse;
