@@ -85,6 +85,8 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
     @Modifying
     void deleteCardFollowByAccount_UuidAndWorkspace_Uuid(UUID memberId, UUID workspaceId);
 
+    List<WorkspaceMember> findWorkspaceMembersByWorkspaceAndAccountNotIn(Workspace workspace, Collection<Account> accounts);
+
     Boolean existsWorkspaceMemberByAccountAndWorkspaceAndWorkspaceRoleIn(Account account, Workspace workspace, Collection<WorkspaceRole> roles);
 
 }

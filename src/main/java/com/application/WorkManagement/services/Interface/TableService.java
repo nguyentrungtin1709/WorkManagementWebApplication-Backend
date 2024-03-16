@@ -10,6 +10,7 @@ import com.application.WorkManagement.dto.responses.table.TableActivityResponse;
 import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
 import com.application.WorkManagement.dto.responses.table.TableMemberResponse;
 import com.application.WorkManagement.dto.responses.table.TableStarResponse;
+import com.application.WorkManagement.dto.responses.workspace.MemberResponse;
 import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
 import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
 import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
@@ -55,4 +56,5 @@ public interface TableService {
 
     List<CategoryResponse> readCategoryListInTable(String accountId, UUID tableId) throws DataNotFoundException, CustomAccessDeniedException;
 
+    List<MemberResponse> readMemberListInWorkspaceButNotInTable(String accountId, UUID tableId) throws DataNotFoundException, CustomAccessDeniedException;
 }

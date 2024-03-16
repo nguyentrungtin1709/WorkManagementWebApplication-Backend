@@ -26,6 +26,8 @@ public interface TableMemberRepository extends JpaRepository<TableMember, TableC
 
     List<TableMember> findTableMembersByTableOrderByTableRoleDesc(TableEntity table);
 
+    List<TableMember> findTableMembersByTable(TableEntity table);
+
     void deleteTableMemberByAccountAndTable(Account account, TableEntity table);
 
     @Query(

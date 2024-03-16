@@ -5,6 +5,7 @@ import com.application.WorkManagement.dto.mappers.table.TableActivityMapper;
 import com.application.WorkManagement.dto.mappers.table.TableEntityMapper;
 import com.application.WorkManagement.dto.mappers.table.TableMemberMapper;
 import com.application.WorkManagement.dto.mappers.table.TableStarMapper;
+import com.application.WorkManagement.dto.mappers.workspace.WorkspaceMemberMapper;
 import com.application.WorkManagement.dto.requests.category.CategoryRequest;
 import com.application.WorkManagement.dto.requests.table.ImageGalleryRequest;
 import com.application.WorkManagement.dto.requests.table.TableMemberRequest;
@@ -15,6 +16,7 @@ import com.application.WorkManagement.dto.responses.table.TableActivityResponse;
 import com.application.WorkManagement.dto.responses.table.TableEntityResponse;
 import com.application.WorkManagement.dto.responses.table.TableMemberResponse;
 import com.application.WorkManagement.dto.responses.table.TableStarResponse;
+import com.application.WorkManagement.dto.responses.workspace.MemberResponse;
 import com.application.WorkManagement.entities.*;
 import com.application.WorkManagement.enums.ActivityType;
 import com.application.WorkManagement.enums.TableRole;
@@ -57,6 +59,10 @@ public class TableServiceImpl implements TableService {
 
     private final TableActivityMapper tableActivityMapper;
 
+    private final WorkspaceMemberRepository workspaceMemberRepository;
+
+    private final WorkspaceMemberMapper workspaceMemberMapper;
+
     private final ImageGalleryRepository imageGalleryRepository;
 
     private final CategoryRepository categoryRepository;
@@ -74,7 +80,7 @@ public class TableServiceImpl implements TableService {
             TableEntityMapper tableEntityMapper,
             TableStarMapper tableStarMapper,
             TableMemberMapper tableMemberMapper,
-            TableActivityMapper tableActivityMapper,
+            TableActivityMapper tableActivityMapper, WorkspaceMemberRepository workspaceMemberRepository, WorkspaceMemberMapper workspaceMemberMapper,
             ImageGalleryRepository imageGalleryRepository,
             CategoryRepository categoryRepository,
             CategoryMapper categoryMapper
@@ -89,6 +95,8 @@ public class TableServiceImpl implements TableService {
         this.tableStarMapper = tableStarMapper;
         this.tableMemberMapper = tableMemberMapper;
         this.tableActivityMapper = tableActivityMapper;
+        this.workspaceMemberRepository = workspaceMemberRepository;
+        this.workspaceMemberMapper = workspaceMemberMapper;
         this.imageGalleryRepository = imageGalleryRepository;
         this.categoryRepository = categoryRepository;
         this.categoryMapper = categoryMapper;
@@ -448,6 +456,22 @@ public class TableServiceImpl implements TableService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<MemberResponse> readMemberListInWorkspaceButNotInTable(String accountId, UUID tableId) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        TableEntity table = getTableFromId(tableId);
+        tablePermissionChecker.checkReadPermission(account, table);
+        List<Account> accounts = tableMemberRepository
+                .findTableMembersByTable(table)
+                .stream()
+                .map(TableMember::getAccount)
+                .toList();
+        return workspaceMemberRepository
+                .findWorkspaceMembersByWorkspaceAndAccountNotIn(table.getWorkspace(), accounts)
+                .stream()
+                .map(workspaceMemberMapper)
+                .collect(Collectors.toList());
+    }
 
     private Account getAccountFromAuthenticationName(String uuid) throws DataNotFoundException {
         return accountRepository
