@@ -106,4 +106,16 @@ public class RestExceptionHandler {
                 );
     }
 
+    @ExceptionHandler(InvalidPositionException.class)
+    public ResponseEntity<ExceptionResponse> invalidPositionException(
+            InvalidPositionException exception
+    ) {
+        return ResponseEntity
+                .badRequest()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        new ExceptionResponse(exception.getMessage())
+                );
+    }
+
 }

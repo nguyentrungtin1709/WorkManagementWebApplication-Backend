@@ -25,6 +25,8 @@ public class TableEntityResponse {
 
     private URI background;
 
+    private Integer numberOfCategories;
+
     private TableRole role;
 
     private UUID workspaceId;

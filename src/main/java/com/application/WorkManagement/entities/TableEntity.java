@@ -2,6 +2,7 @@ package com.application.WorkManagement.entities;
 
 import com.application.WorkManagement.enums.TableScope;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -60,6 +61,13 @@ public class TableEntity {
             name = "bang_hinh_nen"
     )
     private URI background;
+
+    @Column(
+            name = "bang_so_luong_dm",
+            nullable = false
+    )
+    @PositiveOrZero
+    private Integer numberOfCategories;
 
     @CreationTimestamp
     @Column(

@@ -13,6 +13,8 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
     Boolean existsCategoryByTableAndName(TableEntity table, String name);
 
-    List<Category> findCategoriesByTableOrderByCreatedAtDesc(TableEntity table);
+    List<Category> findCategoriesByTableOrderByPositionDesc(TableEntity table);
+
+    List<Category> findCategoriesByTable(TableEntity table);
 
 }

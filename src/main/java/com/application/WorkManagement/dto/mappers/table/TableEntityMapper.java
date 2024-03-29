@@ -18,6 +18,7 @@ public class TableEntityMapper implements Function<TableMember, TableEntityRespo
                 .description(member.getTable().getDescription())
                 .scope(member.getTable().getTableScope())
                 .background(member.getTable().getBackground())
+                .numberOfCategories(member.getTable().getNumberOfCategories())
                 .role(member.getTableRole())
                 .workspaceId(member.getTable().getWorkspace().getUuid())
                 .createdAt(member.getTable().getCreatedAt())

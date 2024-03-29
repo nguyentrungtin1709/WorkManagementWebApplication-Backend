@@ -411,6 +411,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                     .name(request.getName())
                     .description(request.getDescription())
                     .tableScope(request.getScope())
+                    .numberOfCategories(0)
                     .account(account)
                     .workspace(workspace)
                     .build()

@@ -19,6 +19,7 @@ import com.application.WorkManagement.dto.responses.table.TableStarResponse;
 import com.application.WorkManagement.dto.responses.workspace.MemberResponse;
 import com.application.WorkManagement.entities.*;
 import com.application.WorkManagement.enums.ActivityType;
+import com.application.WorkManagement.enums.CategoryColor;
 import com.application.WorkManagement.enums.TableRole;
 import com.application.WorkManagement.enums.TableScope;
 import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
@@ -420,11 +421,15 @@ public class TableServiceImpl implements TableService {
                 Category
                     .builder()
                     .name(request.getName())
+                    .color(CategoryColor.GRAY)
+                    .position(table.getNumberOfCategories() + 1)
                     .numberOfCards(0)
                     .account(account)
                     .table(table)
                     .build()
         );
+        table.setNumberOfCategories(table.getNumberOfCategories() + 1);
+        table = tableRepository.save(table);
         activityRepository.save(
                 Activity
                         .builder()
@@ -450,7 +455,7 @@ public class TableServiceImpl implements TableService {
         TableEntity table = getTableFromId(tableId);
         tablePermissionChecker.checkReadPermission(account, table);
         return categoryRepository
-                .findCategoriesByTableOrderByCreatedAtDesc(table)
+                .findCategoriesByTableOrderByPositionDesc(table)
                 .stream()
                 .map(categoryMapper)
                 .collect(Collectors.toList());

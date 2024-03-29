@@ -1,6 +1,8 @@
 package com.application.WorkManagement.entities;
 
+import com.application.WorkManagement.enums.CategoryColor;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -39,6 +41,22 @@ public class Category {
             length = 120
     )
     private String name;
+
+    @Column(
+            name = "dm_vi_tri",
+            nullable = false
+    )
+    @Positive
+    private Integer position;
+
+    @Column(
+            name = "dm_mau_sac",
+            nullable = false
+    )
+    @Enumerated(
+            value = EnumType.STRING
+    )
+    private CategoryColor color;
 
     @PositiveOrZero
     @Column(

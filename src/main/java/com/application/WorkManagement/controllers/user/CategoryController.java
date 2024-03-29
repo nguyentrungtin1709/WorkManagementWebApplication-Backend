@@ -1,12 +1,15 @@
 package com.application.WorkManagement.controllers.user;
 
 import com.application.WorkManagement.dto.requests.card.CardRequest;
+import com.application.WorkManagement.dto.requests.category.CategoryColorRequest;
+import com.application.WorkManagement.dto.requests.category.CategoryPositionRequest;
 import com.application.WorkManagement.dto.requests.category.CategoryRequest;
 import com.application.WorkManagement.dto.responses.card.CardListResponse;
 import com.application.WorkManagement.dto.responses.category.CategoryResponse;
 import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
 import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
 import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
+import com.application.WorkManagement.exceptions.custom.InvalidPositionException;
 import com.application.WorkManagement.services.Interface.CategoryService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -55,6 +58,42 @@ public class CategoryController {
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(
                         categoryService.updateCategoryById(
+                                authentication.getName(),
+                                categoryId,
+                                request
+                        )
+                );
+    }
+
+    @PatchMapping("/{categoryId}/color")
+    public ResponseEntity<CategoryResponse> updateBackgroundColorOfCategory(
+            JwtAuthenticationToken authentication,
+            @PathVariable("categoryId") UUID categoryId,
+            @Valid @RequestBody CategoryColorRequest request
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        categoryService.updateBackgroundColorOfCategory(
+                            authentication.getName(),
+                            categoryId,
+                            request
+                        )
+                );
+    }
+
+    @PatchMapping("/{categoryId}/position")
+    public ResponseEntity<CategoryResponse> updatePositionOfCategory(
+            JwtAuthenticationToken authentication,
+            @PathVariable("categoryId") UUID categoryId,
+            @Valid @RequestBody CategoryPositionRequest request
+    ) throws DataNotFoundException, CustomAccessDeniedException, InvalidPositionException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        categoryService.updatePositionOfCategory(
                                 authentication.getName(),
                                 categoryId,
                                 request

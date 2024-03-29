@@ -15,6 +15,8 @@ public class CategoryMapper implements Function<Category, CategoryResponse> {
                 .builder()
                 .id(category.getUuid())
                 .name(category.getName())
+                .position(category.getPosition())
+                .color(category.getColor())
                 .numberOfCards(category.getNumberOfCards())
                 .createdAt(category.getCreatedAt())
                 .tableId(category.getTable().getUuid())
