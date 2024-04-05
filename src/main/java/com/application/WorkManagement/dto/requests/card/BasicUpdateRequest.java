@@ -6,7 +6,6 @@ import org.hibernate.validator.constraints.Length;
 
 @Setter
 @Getter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class BasicUpdateRequest {

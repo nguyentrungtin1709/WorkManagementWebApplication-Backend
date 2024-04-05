@@ -3,12 +3,15 @@ package com.application.WorkManagement.services.card;
 import com.application.WorkManagement.dto.mappers.card.CardListResponseMapper;
 import com.application.WorkManagement.dto.mappers.card.CardResponseMapper;
 import com.application.WorkManagement.dto.requests.card.BasicUpdateRequest;
+import com.application.WorkManagement.dto.requests.card.PositionUpdateRequest;
 import com.application.WorkManagement.dto.responses.card.CardListResponse;
 import com.application.WorkManagement.dto.responses.card.CardResponse;
 import com.application.WorkManagement.entities.Account;
 import com.application.WorkManagement.entities.Card;
+import com.application.WorkManagement.entities.Category;
 import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
 import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
+import com.application.WorkManagement.exceptions.custom.InvalidPositionException;
 import com.application.WorkManagement.repositories.*;
 import com.application.WorkManagement.services.Interface.CardService;
 import com.application.WorkManagement.services.table.TablePermissionChecker;
@@ -104,6 +107,96 @@ public class CardServiceImplement implements CardService {
         );
     }
 
+    @Override
+    public CardResponse updatePositionOfCard(String accountId, UUID cardId, PositionUpdateRequest request) throws DataNotFoundException, CustomAccessDeniedException, InvalidPositionException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        checkManageCardPermission(account, card);
+        Category category = getCategoryById(request.getCategoryId());
+        if (card.getCategory().getUuid().equals(category.getUuid())){
+            if (request.getLocation() > category.getNumberOfCards()) {
+                throw new InvalidPositionException("Vị trí không hợp lệ");
+            }
+            if (card.getLocation() > request.getLocation()) {
+                Integer location = card.getLocation();
+                card.setLocation(request.getLocation());
+                card = cardRepository.save(card);
+                cardRepository
+                        .findCardsByCategory(card.getCategory())
+                        .forEach(item -> {
+                            if (item.getLocation() >= request.getLocation() && item.getLocation() < location && !item.getUuid().equals(cardId)) {
+                                item.setLocation(item.getLocation() + 1);
+                                cardRepository.save(item);
+                            }
+                        });
+            }
+            else if (card.getLocation() < request.getLocation()) {
+                Integer location = card.getLocation();
+                card.setLocation(request.getLocation());
+                card = cardRepository.save(card);
+                cardRepository
+                        .findCardsByCategory(card.getCategory())
+                        .forEach(item -> {
+                            if (item.getLocation() > location && item.getLocation() <= request.getLocation() && !item.getUuid().equals(cardId)){
+                                item.setLocation(item.getLocation() - 1);
+                                cardRepository.save(item);
+                            }
+                        });
+            }
+        }
+        else {
+            if (request.getLocation() > category.getNumberOfCards() + 1) {
+                throw new InvalidPositionException("Vị trí không hợp lệ");
+            }
+            Category oldCategory = card.getCategory();
+            Integer oldLocation = card.getLocation();
+            card.setLocation(request.getLocation());
+            card.setCategory(category);
+            card = cardRepository.save(card);
+            oldCategory.setNumberOfCards(oldCategory.getNumberOfCards() - 1);
+            categoryRepository.save(oldCategory);
+            cardRepository
+                    .findCardsByCategory(oldCategory)
+                    .forEach(item -> {
+                        if (item.getLocation() > oldLocation){
+                            item.setLocation(item.getLocation() - 1);
+                            cardRepository.save(item);
+                        }
+                    });
+            category.setNumberOfCards(category.getNumberOfCards() + 1);
+            category = categoryRepository.save(category);
+            cardRepository
+                    .findCardsByCategory(category)
+                    .forEach(item -> {
+                        if (item.getLocation() >= request.getLocation() && !item.getUuid().equals(cardId)){
+                            item.setLocation(item.getLocation() + 1);
+                            cardRepository.save(item);
+                        }
+                    });
+        }
+        Boolean isFollow = cardFollowRepository.existsCardFollowByAccountAndCard(account, card);
+        return cardResponseMapper.apply(card, isFollow);
+    }
+
+    @Override
+    public void deleteCard(String accountId, UUID cardId) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        Category category = card.getCategory();
+        checkManageCardPermission(account, card);
+        cardRepository.deleteById(card.getUuid());
+        category.setNumberOfCards(category.getNumberOfCards() - 1);
+        category = categoryRepository.save(category);
+        cardRepository
+                .findCardsByCategory(category)
+                .forEach(item -> {
+                    if (item.getLocation() > card.getLocation()){
+                        item.setLocation(item.getLocation() - 1);
+                        cardRepository.save(item);
+                    }
+                });
+    }
+
     private Card getCardFromId(UUID cardId) throws DataNotFoundException {
         return cardRepository
                 .findById(cardId)
@@ -114,6 +207,12 @@ public class CardServiceImplement implements CardService {
         return accountRepository
                 .findById(UUID.fromString(accountId))
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy tài khoản"));
+    }
+
+    private Category getCategoryById(UUID categoryId) throws DataNotFoundException {
+        return categoryRepository
+                .findById(categoryId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy danh mục"));
     }
 
     private void checkManageCardPermission(Account account, Card card) throws CustomAccessDeniedException {

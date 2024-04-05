@@ -13,4 +13,6 @@ public interface CardRepository extends JpaRepository<Card, UUID> {
 
     List<Card> findCardsByCategoryOrderByLocation(Category category);
 
+    List<Card> findCardsByCategory(Category category);
+
 }
