@@ -10,6 +10,7 @@ import com.application.WorkManagement.dto.responses.card.CardListResponse;
 import com.application.WorkManagement.dto.responses.category.CategoryResponse;
 import com.application.WorkManagement.entities.*;
 import com.application.WorkManagement.enums.ActivityType;
+import com.application.WorkManagement.enums.CardProgress;
 import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
 import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
 import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
@@ -137,6 +138,7 @@ public class CategoryServiceImpl implements CategoryService {
         Card card = cardRepository.save(
                 Card.builder()
                         .name(request.getName())
+                        .progress(CardProgress.NONE)
                         .location(category.getNumberOfCards() + 1)
                         .account(account)
                         .category(category)

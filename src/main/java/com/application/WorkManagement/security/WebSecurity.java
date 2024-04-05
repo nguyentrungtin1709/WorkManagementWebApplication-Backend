@@ -72,7 +72,8 @@ public class WebSecurity {
                                 "/api/v1/workspaces/**",
                                 "/api/v1/tables/**",
                                 "/api/v1/images",
-                                "/api/v1/categories/**"
+                                "/api/v1/categories/**",
+                                "/api/v1/cards/**"
                         )
                         .hasAnyAuthority(
                                 userRoleMapper.apply(UserRole.USER.name()),

@@ -1,5 +1,6 @@
 package com.application.WorkManagement.entities;
 
+import com.application.WorkManagement.enums.CardProgress;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
@@ -39,6 +40,15 @@ public class Card {
             length = 1000
     )
     private String description;
+
+    @Column(
+            name = "the_tien_do",
+            nullable = false
+    )
+    @Enumerated(
+            value = EnumType.STRING
+    )
+    private CardProgress progress;
 
     @Positive
     @Column(

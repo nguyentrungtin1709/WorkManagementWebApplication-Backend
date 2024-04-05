@@ -11,6 +11,7 @@ import com.application.WorkManagement.exceptions.custom.CustomDuplicateException
 import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
 import com.application.WorkManagement.exceptions.custom.InvalidPositionException;
 import com.application.WorkManagement.services.Interface.CategoryService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -23,6 +24,9 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/categories")
+@SecurityRequirement(
+        name = "JWT-BEARER"
+)
 public class CategoryController {
 
     private final CategoryService categoryService;

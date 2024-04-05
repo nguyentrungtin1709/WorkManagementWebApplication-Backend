@@ -11,11 +11,13 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CardListResponse {
+public class CardResponse {
 
     private UUID id;
 
     private String name;
+
+    private String description;
 
     private CardProgress progress;
 

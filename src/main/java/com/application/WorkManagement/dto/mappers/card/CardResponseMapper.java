@@ -1,6 +1,7 @@
 package com.application.WorkManagement.dto.mappers.card;
 
 import com.application.WorkManagement.dto.responses.card.CardListResponse;
+import com.application.WorkManagement.dto.responses.card.CardResponse;
 import com.application.WorkManagement.dto.responses.card.DeadlineResponse;
 import com.application.WorkManagement.entities.Card;
 import com.application.WorkManagement.entities.Deadline;
@@ -10,10 +11,11 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 
 @Service
-public class CardListResponseMapper implements BiFunction<Card, Boolean, CardListResponse> {
+public class CardResponseMapper implements BiFunction<Card, Boolean, CardResponse> {
+
 
     @Override
-    public CardListResponse apply(Card card, Boolean isFollow) {
+    public CardResponse apply(Card card, Boolean isFollow) {
         Deadline deadline = card.getDeadline();
         DeadlineResponse deadlineResponse = null;
         if (Objects.nonNull(deadline)){
@@ -25,10 +27,11 @@ public class CardListResponseMapper implements BiFunction<Card, Boolean, CardLis
                     .complete(deadline.getComplete())
                     .build();
         }
-        return CardListResponse
+        return CardResponse
                 .builder()
                 .id(card.getUuid())
                 .name(card.getName())
+                .description(card.getDescription())
                 .progress(card.getProgress())
                 .location(card.getLocation())
                 .createdAt(card.getCreatedAt())
@@ -37,5 +40,4 @@ public class CardListResponseMapper implements BiFunction<Card, Boolean, CardLis
                 .deadline(deadlineResponse)
                 .build();
     }
-
 }
