@@ -1,15 +1,19 @@
 package com.application.WorkManagement.services.card;
 
 import com.application.WorkManagement.dto.mappers.card.CardListResponseMapper;
+import com.application.WorkManagement.dto.mappers.card.CardMemberResponseMapper;
 import com.application.WorkManagement.dto.mappers.card.CardResponseMapper;
+import com.application.WorkManagement.dto.mappers.table.TableMemberMapper;
 import com.application.WorkManagement.dto.requests.card.BasicUpdateRequest;
 import com.application.WorkManagement.dto.requests.card.PositionUpdateRequest;
 import com.application.WorkManagement.dto.responses.card.CardListResponse;
+import com.application.WorkManagement.dto.responses.card.CardMemberResponse;
 import com.application.WorkManagement.dto.responses.card.CardResponse;
-import com.application.WorkManagement.entities.Account;
-import com.application.WorkManagement.entities.Card;
-import com.application.WorkManagement.entities.Category;
+import com.application.WorkManagement.dto.responses.table.TableMemberResponse;
+import com.application.WorkManagement.entities.*;
+import com.application.WorkManagement.enums.ActivityType;
 import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
+import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
 import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
 import com.application.WorkManagement.exceptions.custom.InvalidPositionException;
 import com.application.WorkManagement.repositories.*;
@@ -17,7 +21,10 @@ import com.application.WorkManagement.services.Interface.CardService;
 import com.application.WorkManagement.services.table.TablePermissionChecker;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class CardServiceImplement implements CardService {
@@ -26,13 +33,13 @@ public class CardServiceImplement implements CardService {
 
     private final TablePermissionChecker tablePermissionChecker;
 
-    private final TableRepository tableRepository;
+    private final TableMemberRepository tableMemberRepository;
+
+    private final TableMemberMapper tableMemberMapper;
 
     private final CategoryRepository categoryRepository;
 
     private final CardRepository cardRepository;
-
-    private final CardListResponseMapper cardListResponseMapper;
 
     private final CardResponseMapper cardResponseMapper;
 
@@ -40,34 +47,42 @@ public class CardServiceImplement implements CardService {
 
     private final CardMemberRepository cardMemberRepository;
 
+    private final CardMemberResponseMapper cardMemberResponseMapper;
+
     private final CommentRepository commentRepository;
 
     private final DeadlineRepository deadlineRepository;
 
+    private final ActivityRepository activityRepository;
+
     public CardServiceImplement(
             AccountRepository accountRepository,
             TablePermissionChecker tablePermissionChecker,
-            TableRepository tableRepository,
+            TableMemberRepository tableMemberRepository,
+            TableMemberMapper tableMemberMapper,
             CategoryRepository categoryRepository,
             CardRepository cardRepository,
-            CardListResponseMapper cardListResponseMapper,
             CardResponseMapper cardResponseMapper,
             CardFollowRepository cardFollowRepository,
             CardMemberRepository cardMemberRepository,
+            CardMemberResponseMapper cardMemberResponseMapper,
             CommentRepository commentRepository,
-            DeadlineRepository deadlineRepository
+            DeadlineRepository deadlineRepository,
+            ActivityRepository activityRepository
     ) {
         this.accountRepository = accountRepository;
         this.tablePermissionChecker = tablePermissionChecker;
-        this.tableRepository = tableRepository;
+        this.tableMemberRepository = tableMemberRepository;
+        this.tableMemberMapper = tableMemberMapper;
         this.categoryRepository = categoryRepository;
         this.cardRepository = cardRepository;
-        this.cardListResponseMapper = cardListResponseMapper;
         this.cardResponseMapper = cardResponseMapper;
         this.cardFollowRepository = cardFollowRepository;
         this.cardMemberRepository = cardMemberRepository;
+        this.cardMemberResponseMapper = cardMemberResponseMapper;
         this.commentRepository = commentRepository;
         this.deadlineRepository = deadlineRepository;
+        this.activityRepository = activityRepository;
     }
 
     @Override
@@ -195,12 +210,123 @@ public class CardServiceImplement implements CardService {
                         cardRepository.save(item);
                     }
                 });
+        activityRepository.save(Activity
+                .builder()
+                .activityType(ActivityType.DELETE_CARD)
+                .account(account)
+                .table(category.getTable())
+                .category(category)
+                .createdAt(LocalDateTime.now())
+                .build()
+        );
+    }
+
+    @Override
+    public CardMemberResponse addMemberToCard(String accountId, UUID cardId, UUID memberId) throws DataNotFoundException, CustomAccessDeniedException, CustomDuplicateException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        checkManageCardPermission(account, card);
+        Account member = getAccountFromId(memberId);
+        checkHasAnyRoleInTable(member, card);
+        checkAccountHasBeenMemberOfCard(member, card);
+        CardMember cardMember = cardMemberRepository.save(CardMember
+                .builder()
+                .account(member)
+                .card(card)
+                .build()
+        );
+        if (!accountHasFollowedCard(member, card)) {
+            cardFollowRepository.save(CardFollow
+                    .builder()
+                    .account(member)
+                    .card(card)
+                    .build()
+            );
+        }
+        return cardMemberResponseMapper.apply(cardMember);
+    }
+
+    @Override
+    public CardMemberResponse joinInCard(String accountId, UUID cardId) throws DataNotFoundException, CustomAccessDeniedException, CustomDuplicateException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        checkManageCardPermission(account, card);
+        checkAccountHasBeenMemberOfCard(account, card);
+        CardMember cardMember = cardMemberRepository.save(
+                CardMember
+                    .builder()
+                    .account(account)
+                    .card(card)
+                    .build()
+        );
+        if (!accountHasFollowedCard(account, card)) {
+            cardFollowRepository.save(
+                    CardFollow
+                        .builder()
+                        .account(account)
+                        .card(card)
+                        .build()
+            );
+        }
+        return cardMemberResponseMapper.apply(cardMember);
+    }
+
+    @Override
+    public List<TableMemberResponse> readMemberListInTableButNotInCard(String accountId, UUID cardId) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        checkManageCardPermission(account, card);
+        List<Account> membersOfCard = cardMemberRepository
+                .findCardMembersByCard(card)
+                .stream()
+                .map(CardMember::getAccount)
+                .toList();
+        return tableMemberRepository
+                .findTableMembersByTableAndAccountNotIn(
+                    card.getCategory().getTable(),
+                    membersOfCard
+                )
+                .stream()
+                .map(tableMemberMapper)
+                .toList();
+    }
+
+    @Override
+    public List<CardMemberResponse> readMembersListOfCard(String accountId, UUID cardId) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        checkReadCardPermission(account, card);
+        return cardMemberRepository
+                .findCardMembersByCard(card)
+                .stream()
+                .map(cardMemberResponseMapper)
+                .toList();
+    }
+
+    @Override
+    public CardMemberResponse readMemberById(String accountId, UUID cardId, UUID memberId) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        checkReadCardPermission(account, card);
+        Account member = getAccountFromId(memberId);
+        return cardMemberResponseMapper
+                .apply(
+                        cardMemberRepository
+                                .findCardMemberByAccountAndCard(member, card)
+                                .orElseThrow(() -> new DataNotFoundException("Tài khoản không là thành viên của thẻ"))
+                );
     }
 
     private Card getCardFromId(UUID cardId) throws DataNotFoundException {
         return cardRepository
                 .findById(cardId)
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy thẻ công việc"));
+    }
+
+    private Account getAccountFromId(UUID accountId) throws DataNotFoundException {
+        return accountRepository
+                .findById(accountId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy tài khoản"));
     }
 
     private Account getAccountFromAuthenticationName(String accountId) throws DataNotFoundException {
@@ -219,7 +345,25 @@ public class CardServiceImplement implements CardService {
         tablePermissionChecker.checkManageComponentsInTablePermission(account, card.getCategory().getTable());
     }
 
+    private void checkAdminPermissionInTable(Account account, Card card) throws CustomAccessDeniedException {
+        tablePermissionChecker.checkManagePermission(account, card.getCategory().getTable());
+    }
+
+    private void checkHasAnyRoleInTable(Account account, Card card) throws CustomAccessDeniedException {
+        tablePermissionChecker.checkMemberPermission(account, card.getCategory().getTable());
+    }
+
     private void checkReadCardPermission(Account account, Card card) throws CustomAccessDeniedException {
         tablePermissionChecker.checkReadPermission(account, card.getCategory().getTable());
+    }
+
+    private void checkAccountHasBeenMemberOfCard(Account account, Card card) throws CustomDuplicateException {
+        if (cardMemberRepository.existsCardMemberByAccountAndCard(account, card)){
+            throw new CustomDuplicateException("Tài khoản đã là thành viên của thẻ");
+        }
+    }
+
+    private Boolean accountHasFollowedCard(Account account, Card card) {
+        return cardFollowRepository.existsCardFollowByAccountAndCard(account, card);
     }
 }

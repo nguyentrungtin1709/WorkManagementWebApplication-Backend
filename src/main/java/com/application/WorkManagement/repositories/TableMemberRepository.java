@@ -44,4 +44,6 @@ public interface TableMemberRepository extends JpaRepository<TableMember, TableC
     @Modifying
     void deleteCardFollowByAccount_UuidAndTable_Uuid(UUID memberId, UUID tableId);
 
+    List<TableMember> findTableMembersByTableAndAccountNotIn(TableEntity table, Collection<Account> accounts);
+
 }

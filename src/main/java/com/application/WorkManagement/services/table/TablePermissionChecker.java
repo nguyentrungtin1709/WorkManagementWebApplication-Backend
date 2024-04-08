@@ -32,6 +32,10 @@ public class TablePermissionChecker {
         }
     }
 
+    public void checkMemberPermission(Account account, TableEntity table) throws CustomAccessDeniedException {
+        tableRoleChecker.checkHasAnyRoleInTable(account, table);
+    }
+
     public void checkManageComponentsInTablePermission(Account account, TableEntity table) throws CustomAccessDeniedException {
         tableRoleChecker.checkMemberRoleInTable(account, table);
     }
