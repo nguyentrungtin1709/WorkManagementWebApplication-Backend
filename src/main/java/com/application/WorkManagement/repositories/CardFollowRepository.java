@@ -12,4 +12,6 @@ public interface CardFollowRepository extends JpaRepository<CardFollow, CardComp
 
     Boolean existsCardFollowByAccountAndCard(Account account, Card card);
 
+    void deleteCardFollowByAccountAndCard(Account account, Card card);
+
 }

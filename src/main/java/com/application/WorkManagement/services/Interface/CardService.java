@@ -33,4 +33,13 @@ public interface CardService {
     List<CardMemberResponse> readMembersListOfCard(String accountId, UUID cardId) throws DataNotFoundException, CustomAccessDeniedException;
 
     CardMemberResponse readMemberById(String accountId, UUID cardId, UUID memberId) throws DataNotFoundException, CustomAccessDeniedException;
+
+    void deleteMemberOfCard(String accountId, UUID cardId, UUID memberId) throws DataNotFoundException, CustomAccessDeniedException;
+
+    void leaveMembersList(String accountId, UUID cardId) throws DataNotFoundException, CustomAccessDeniedException;
+
+    void followCard(String accountId, UUID cardId) throws DataNotFoundException, CustomAccessDeniedException, CustomDuplicateException;
+
+    void unfollowCard(String accountId, UUID cardId) throws CustomAccessDeniedException, DataNotFoundException;
+
 }

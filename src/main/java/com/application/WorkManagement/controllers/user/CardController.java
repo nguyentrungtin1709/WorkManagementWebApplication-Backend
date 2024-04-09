@@ -181,4 +181,62 @@ public class CardController {
                 );
     }
 
+    @DeleteMapping("/{cardId}/members/{memberId}")
+    public ResponseEntity<Void> deleteMemberOfCard(
+            JwtAuthenticationToken token,
+            @PathVariable("cardId") UUID cardId,
+            @PathVariable("memberId") UUID memberId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        cardService.deleteMemberOfCard(
+                token.getName(),
+                cardId,
+                memberId
+        );
+        return ResponseEntity
+                .noContent()
+                .build();
+    }
+
+    @DeleteMapping("/{cardId}/members/leave")
+    public ResponseEntity<Void> leaveMembersList(
+            JwtAuthenticationToken token,
+            @PathVariable("cardId") UUID cardId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        cardService.leaveMembersList(
+                token.getName(),
+                cardId
+        );
+        return ResponseEntity
+                .noContent()
+                .build();
+    }
+
+    @PostMapping("/{cardId}/follow-list")
+    public ResponseEntity<Void> followCard(
+            JwtAuthenticationToken token,
+            @PathVariable("cardId") UUID cardId
+    ) throws DataNotFoundException, CustomAccessDeniedException, CustomDuplicateException {
+        cardService.followCard(
+                token.getName(),
+                cardId
+        );
+        return ResponseEntity
+                .noContent()
+                .build();
+    }
+
+    @DeleteMapping("/{cardId}/follow-list")
+    public ResponseEntity<Void> unfollowCard(
+            JwtAuthenticationToken token,
+            @PathVariable("cardId") UUID cardId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        cardService.unfollowCard(
+                token.getName(),
+                cardId
+        );
+        return ResponseEntity
+                .noContent()
+                .build();
+
+    }
 }

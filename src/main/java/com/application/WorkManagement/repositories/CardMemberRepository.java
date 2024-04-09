@@ -19,4 +19,6 @@ public interface CardMemberRepository extends JpaRepository<CardMember, CardComp
 
     Optional<CardMember> findCardMemberByAccountAndCard(Account account, Card card);
 
+    void deleteCardMemberByAccountAndCard(Account account, Card card);
+
 }

@@ -11,6 +11,7 @@ import com.application.WorkManagement.dto.responses.card.CardMemberResponse;
 import com.application.WorkManagement.dto.responses.card.CardResponse;
 import com.application.WorkManagement.dto.responses.table.TableMemberResponse;
 import com.application.WorkManagement.entities.*;
+import com.application.WorkManagement.entities.CompositePrimaryKeys.CardCompositeId;
 import com.application.WorkManagement.enums.ActivityType;
 import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
 import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
@@ -20,6 +21,7 @@ import com.application.WorkManagement.repositories.*;
 import com.application.WorkManagement.services.Interface.CardService;
 import com.application.WorkManagement.services.table.TablePermissionChecker;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -317,6 +319,53 @@ public class CardServiceImplement implements CardService {
                 );
     }
 
+    @Override
+    @Transactional
+    public void deleteMemberOfCard(String accountId, UUID cardId, UUID memberId) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        checkManageCardPermission(account, card);
+        Account member = getAccountFromId(memberId);
+        cardMemberRepository.deleteCardMemberByAccountAndCard(member, card);
+    }
+
+    @Override
+    @Transactional
+    public void leaveMembersList(String accountId, UUID cardId) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        checkHasAnyRoleInTable(account, card);
+        cardMemberRepository.deleteCardMemberByAccountAndCard(account, card);
+        cardFollowRepository.deleteCardFollowByAccountAndCard(account, card);
+    }
+
+    @Override
+    public void followCard(
+            String accountId,
+            UUID cardId
+    ) throws DataNotFoundException, CustomAccessDeniedException, CustomDuplicateException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        checkHasAnyRoleInTable(account, card);
+        checkAccountHasFollowCard(account, card);
+        cardFollowRepository.save(
+                CardFollow
+                        .builder()
+                        .account(account)
+                        .card(card)
+                        .build()
+        );
+    }
+
+    @Override
+    @Transactional
+    public void unfollowCard(String accountId, UUID cardId) throws CustomAccessDeniedException, DataNotFoundException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        checkHasAnyRoleInTable(account, card);
+        cardFollowRepository.deleteCardFollowByAccountAndCard(account, card);
+    }
+
     private Card getCardFromId(UUID cardId) throws DataNotFoundException {
         return cardRepository
                 .findById(cardId)
@@ -360,6 +409,12 @@ public class CardServiceImplement implements CardService {
     private void checkAccountHasBeenMemberOfCard(Account account, Card card) throws CustomDuplicateException {
         if (cardMemberRepository.existsCardMemberByAccountAndCard(account, card)){
             throw new CustomDuplicateException("Tài khoản đã là thành viên của thẻ");
+        }
+    }
+
+    private void checkAccountHasFollowCard(Account account, Card card) throws CustomDuplicateException {
+        if (cardFollowRepository.existsCardFollowByAccountAndCard(account, card)) {
+            throw new CustomDuplicateException("Tài khoản đã theo dõi thẻ");
         }
     }
 
