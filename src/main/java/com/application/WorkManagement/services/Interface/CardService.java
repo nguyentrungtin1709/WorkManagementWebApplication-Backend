@@ -1,15 +1,13 @@
 package com.application.WorkManagement.services.Interface;
 
 import com.application.WorkManagement.dto.requests.card.BasicUpdateRequest;
+import com.application.WorkManagement.dto.requests.card.DeadlineRequest;
 import com.application.WorkManagement.dto.requests.card.PositionUpdateRequest;
 import com.application.WorkManagement.dto.responses.card.CardListResponse;
 import com.application.WorkManagement.dto.responses.card.CardMemberResponse;
 import com.application.WorkManagement.dto.responses.card.CardResponse;
 import com.application.WorkManagement.dto.responses.table.TableMemberResponse;
-import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
-import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
-import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
-import com.application.WorkManagement.exceptions.custom.InvalidPositionException;
+import com.application.WorkManagement.exceptions.custom.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -42,4 +40,7 @@ public interface CardService {
 
     void unfollowCard(String accountId, UUID cardId) throws CustomAccessDeniedException, DataNotFoundException;
 
+    void setDeadline(String accountId, UUID cardId, DeadlineRequest request) throws DataNotFoundException, CustomAccessDeniedException, InvalidDeadlineException, CustomDuplicateException;
+
+    void removeDeadline(String accountId, UUID cardId) throws DataNotFoundException, CustomAccessDeniedException;
 }

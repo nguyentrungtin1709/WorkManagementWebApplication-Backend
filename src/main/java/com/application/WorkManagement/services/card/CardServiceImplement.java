@@ -5,6 +5,7 @@ import com.application.WorkManagement.dto.mappers.card.CardMemberResponseMapper;
 import com.application.WorkManagement.dto.mappers.card.CardResponseMapper;
 import com.application.WorkManagement.dto.mappers.table.TableMemberMapper;
 import com.application.WorkManagement.dto.requests.card.BasicUpdateRequest;
+import com.application.WorkManagement.dto.requests.card.DeadlineRequest;
 import com.application.WorkManagement.dto.requests.card.PositionUpdateRequest;
 import com.application.WorkManagement.dto.responses.card.CardListResponse;
 import com.application.WorkManagement.dto.responses.card.CardMemberResponse;
@@ -13,17 +14,18 @@ import com.application.WorkManagement.dto.responses.table.TableMemberResponse;
 import com.application.WorkManagement.entities.*;
 import com.application.WorkManagement.entities.CompositePrimaryKeys.CardCompositeId;
 import com.application.WorkManagement.enums.ActivityType;
-import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
-import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
-import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
-import com.application.WorkManagement.exceptions.custom.InvalidPositionException;
+import com.application.WorkManagement.exceptions.custom.*;
 import com.application.WorkManagement.repositories.*;
 import com.application.WorkManagement.services.Interface.CardService;
 import com.application.WorkManagement.services.table.TablePermissionChecker;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -364,6 +366,89 @@ public class CardServiceImplement implements CardService {
         Card card = getCardFromId(cardId);
         checkHasAnyRoleInTable(account, card);
         cardFollowRepository.deleteCardFollowByAccountAndCard(account, card);
+    }
+
+    @Override
+    public void setDeadline(String accountId, UUID cardId, DeadlineRequest request) throws DataNotFoundException, CustomAccessDeniedException, InvalidDeadlineException, CustomDuplicateException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        checkManageCardPermission(account, card);
+        if (deadlineRepository.existsDeadlineByCard(card)) {
+            throw new CustomDuplicateException("Thẻ đã có ngày hết hạn");
+        }
+        LocalDateTime deadline = Instant
+                .ofEpochMilli(request.getDeadline())
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
+        if (deadline.isBefore(LocalDateTime.now())) {
+            throw new InvalidDeadlineException("Ngày hết hạn không hợp lệ");
+        }
+        LocalDateTime reminder = deadline.minusDays(request.getReminder());
+        if (reminder.isBefore(LocalDateTime.now())) {
+            throw new InvalidDeadlineException("Ngày nhắc nhở không hợp lệ");
+        }
+        deadlineRepository.save(
+                Deadline.builder()
+                        .deadline(deadline)
+                        .reminderDate(reminder)
+                        .complete(false)
+                        .account(account)
+                        .card(card)
+                        .build()
+        );
+        activityRepository.save(
+                Activity
+                        .builder()
+                        .activityType(ActivityType.NOTIFICATION_DEADLINE)
+                        .createdAt(deadline)
+                        .account(account)
+                        .table(card.getCategory().getTable())
+                        .category(card.getCategory())
+                        .card(card)
+                        .build()
+        );
+        activityRepository.save(
+                Activity
+                        .builder()
+                        .activityType(ActivityType.REMINDER_DEADLINE)
+                        .createdAt(reminder)
+                        .account(account)
+                        .table(card.getCategory().getTable())
+                        .category(card.getCategory())
+                        .card(card)
+                        .build()
+        );
+        activityRepository.save(
+                Activity
+                        .builder()
+                        .activityType(ActivityType.SET_DEADLINE)
+                        .createdAt(LocalDateTime.now())
+                        .account(account)
+                        .table(card.getCategory().getTable())
+                        .category(card.getCategory())
+                        .card(card)
+                        .build()
+        );
+    }
+
+    @Override
+    @Transactional
+    public void removeDeadline(String accountId, UUID cardId) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        checkManageCardPermission(account, card);
+        deadlineRepository.deleteDeadlineByCard(card);
+        activityRepository.save(
+                Activity
+                        .builder()
+                        .activityType(ActivityType.DELETE_DEADLINE)
+                        .createdAt(LocalDateTime.now())
+                        .account(account)
+                        .table(card.getCategory().getTable())
+                        .category(card.getCategory())
+                        .card(card)
+                        .build()
+        );
     }
 
     private Card getCardFromId(UUID cardId) throws DataNotFoundException {

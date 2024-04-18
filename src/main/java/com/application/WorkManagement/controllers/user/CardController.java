@@ -1,14 +1,12 @@
 package com.application.WorkManagement.controllers.user;
 
 import com.application.WorkManagement.dto.requests.card.BasicUpdateRequest;
+import com.application.WorkManagement.dto.requests.card.DeadlineRequest;
 import com.application.WorkManagement.dto.requests.card.PositionUpdateRequest;
 import com.application.WorkManagement.dto.responses.card.CardMemberResponse;
 import com.application.WorkManagement.dto.responses.card.CardResponse;
 import com.application.WorkManagement.dto.responses.table.TableMemberResponse;
-import com.application.WorkManagement.exceptions.custom.CustomAccessDeniedException;
-import com.application.WorkManagement.exceptions.custom.CustomDuplicateException;
-import com.application.WorkManagement.exceptions.custom.DataNotFoundException;
-import com.application.WorkManagement.exceptions.custom.InvalidPositionException;
+import com.application.WorkManagement.exceptions.custom.*;
 import com.application.WorkManagement.services.Interface.CardService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -18,6 +16,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 
@@ -238,5 +239,31 @@ public class CardController {
                 .noContent()
                 .build();
 
+    }
+
+    @PostMapping("/{cardId}/deadline")
+    public ResponseEntity<Void> setDeadline(
+            JwtAuthenticationToken token,
+            @PathVariable("cardId") UUID cardId,
+            @Valid @RequestBody DeadlineRequest request
+    ) throws DataNotFoundException, InvalidDeadlineException, CustomAccessDeniedException, CustomDuplicateException {
+        cardService.setDeadline(token.getName(), cardId, request);
+        return ResponseEntity
+                .noContent()
+                .build();
+    }
+
+    @DeleteMapping("/{cardId}/deadline")
+    public ResponseEntity<Void> removeDeadline(
+            JwtAuthenticationToken token,
+            @PathVariable("cardId") UUID cardId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        cardService.removeDeadline(
+                token.getName(),
+                cardId
+        );
+        return ResponseEntity
+                .noContent()
+                .build();
     }
 }

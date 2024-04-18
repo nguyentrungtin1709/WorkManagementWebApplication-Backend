@@ -118,4 +118,17 @@ public class RestExceptionHandler {
                 );
     }
 
+    @ExceptionHandler(InvalidDeadlineException.class)
+    public ResponseEntity<ExceptionResponse> invalidDeadlineException(
+            InvalidDeadlineException exception
+    ) {
+        return ResponseEntity
+                .badRequest()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        new ExceptionResponse(exception.getMessage())
+                );
+    }
+
+
 }
