@@ -1,11 +1,10 @@
 package com.application.WorkManagement.services.Interface;
 
-import com.application.WorkManagement.dto.requests.card.BasicUpdateRequest;
-import com.application.WorkManagement.dto.requests.card.DeadlineRequest;
-import com.application.WorkManagement.dto.requests.card.PositionUpdateRequest;
+import com.application.WorkManagement.dto.requests.card.*;
 import com.application.WorkManagement.dto.responses.card.CardListResponse;
 import com.application.WorkManagement.dto.responses.card.CardMemberResponse;
 import com.application.WorkManagement.dto.responses.card.CardResponse;
+import com.application.WorkManagement.dto.responses.card.comment.CardCommentResponse;
 import com.application.WorkManagement.dto.responses.table.TableMemberResponse;
 import com.application.WorkManagement.exceptions.custom.*;
 
@@ -43,4 +42,16 @@ public interface CardService {
     void setDeadline(String accountId, UUID cardId, DeadlineRequest request) throws DataNotFoundException, CustomAccessDeniedException, InvalidDeadlineException, CustomDuplicateException;
 
     void removeDeadline(String accountId, UUID cardId) throws DataNotFoundException, CustomAccessDeniedException;
+
+    void updateCompleteFieldOfDeadline(String accountId, UUID cardId, CompleteDeadlineRequest request) throws DataNotFoundException, CustomAccessDeniedException;
+
+    CardCommentResponse createComment(String accountId, UUID cardId, CommentRequest request) throws DataNotFoundException, CustomAccessDeniedException;
+
+    List<CardCommentResponse> readCommentsList(String accountId, UUID cardId) throws DataNotFoundException, CustomAccessDeniedException;
+
+    void deleteComment(String accountId, UUID cardId, UUID commentId) throws DataNotFoundException, CustomAccessDeniedException;
+
+    CardCommentResponse readComment(String accountId, UUID cardId, UUID commentId) throws DataNotFoundException, CustomAccessDeniedException;
+
+    CardCommentResponse revokeComment(String accountId, UUID cardId, UUID commentId) throws DataNotFoundException, CustomAccessDeniedException;
 }

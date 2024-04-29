@@ -1,10 +1,9 @@
 package com.application.WorkManagement.controllers.user;
 
-import com.application.WorkManagement.dto.requests.card.BasicUpdateRequest;
-import com.application.WorkManagement.dto.requests.card.DeadlineRequest;
-import com.application.WorkManagement.dto.requests.card.PositionUpdateRequest;
+import com.application.WorkManagement.dto.requests.card.*;
 import com.application.WorkManagement.dto.responses.card.CardMemberResponse;
 import com.application.WorkManagement.dto.responses.card.CardResponse;
+import com.application.WorkManagement.dto.responses.card.comment.CardCommentResponse;
 import com.application.WorkManagement.dto.responses.table.TableMemberResponse;
 import com.application.WorkManagement.exceptions.custom.*;
 import com.application.WorkManagement.services.Interface.CardService;
@@ -261,6 +260,109 @@ public class CardController {
         cardService.removeDeadline(
                 token.getName(),
                 cardId
+        );
+        return ResponseEntity
+                .noContent()
+                .build();
+    }
+
+    @PatchMapping("/{cardId}/deadline/complete")
+    public ResponseEntity<Void> completeDeadline(
+            JwtAuthenticationToken token,
+            @PathVariable("cardId") UUID cardId,
+            @Valid @RequestBody CompleteDeadlineRequest request
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        cardService.updateCompleteFieldOfDeadline(
+                token.getName(),
+                cardId,
+                request
+        );
+        return ResponseEntity
+                .noContent()
+                .build();
+    }
+
+    @PostMapping("/{cardId}/comments")
+    public ResponseEntity<CardCommentResponse> createComment(
+            JwtAuthenticationToken token,
+            @PathVariable("cardId") UUID cardId,
+            @Valid @RequestBody CommentRequest request
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        cardService
+                                .createComment(
+                                        token.getName(),
+                                        cardId,
+                                        request
+                                )
+                );
+    }
+
+    @GetMapping("/{cardId}/comments")
+    public ResponseEntity<List<CardCommentResponse>> readCommentsList(
+            JwtAuthenticationToken token,
+            @PathVariable("cardId") UUID cardId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                    cardService.readCommentsList(
+                            token.getName(),
+                            cardId
+                    )
+                );
+    }
+
+    @GetMapping("/{cardId}/comments/{commentId}")
+    public ResponseEntity<CardCommentResponse> readComment(
+            JwtAuthenticationToken token,
+            @PathVariable("cardId") UUID cardId,
+            @PathVariable("commentId") UUID commentId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        cardService.readComment(
+                                token.getName(),
+                                cardId,
+                                commentId
+                        )
+                );
+    }
+
+    @PatchMapping("/{cardId}/comments/{commentId}")
+    public ResponseEntity<CardCommentResponse> revokeComment(
+            JwtAuthenticationToken token,
+            @PathVariable("cardId") UUID cardId,
+            @PathVariable("commentId") UUID commentId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        cardService.revokeComment(
+                                token.getName(),
+                                cardId,
+                                commentId
+                        )
+                );
+    }
+
+    @DeleteMapping("/{cardId}/comments/{commentId}")
+    public ResponseEntity<Void> deleteComment(
+            JwtAuthenticationToken token,
+            @PathVariable("cardId") UUID cardId,
+            @PathVariable("commentId") UUID commentId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        cardService.deleteComment(
+                token.getName(),
+                cardId,
+                commentId
         );
         return ResponseEntity
                 .noContent()

@@ -12,6 +12,8 @@ public interface DeadlineRepository extends JpaRepository<Deadline, UUID> {
 
     void deleteDeadlineByCard(Card card);
 
+    Deadline findDeadlineByCard(Card card);
+
     Boolean existsDeadlineByCard(Card card);
 
 }

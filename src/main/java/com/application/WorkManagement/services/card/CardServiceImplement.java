@@ -1,15 +1,15 @@
 package com.application.WorkManagement.services.card;
 
+import com.application.WorkManagement.dto.mappers.card.CardCommentResponseMapper;
 import com.application.WorkManagement.dto.mappers.card.CardListResponseMapper;
 import com.application.WorkManagement.dto.mappers.card.CardMemberResponseMapper;
 import com.application.WorkManagement.dto.mappers.card.CardResponseMapper;
 import com.application.WorkManagement.dto.mappers.table.TableMemberMapper;
-import com.application.WorkManagement.dto.requests.card.BasicUpdateRequest;
-import com.application.WorkManagement.dto.requests.card.DeadlineRequest;
-import com.application.WorkManagement.dto.requests.card.PositionUpdateRequest;
+import com.application.WorkManagement.dto.requests.card.*;
 import com.application.WorkManagement.dto.responses.card.CardListResponse;
 import com.application.WorkManagement.dto.responses.card.CardMemberResponse;
 import com.application.WorkManagement.dto.responses.card.CardResponse;
+import com.application.WorkManagement.dto.responses.card.comment.CardCommentResponse;
 import com.application.WorkManagement.dto.responses.table.TableMemberResponse;
 import com.application.WorkManagement.entities.*;
 import com.application.WorkManagement.entities.CompositePrimaryKeys.CardCompositeId;
@@ -53,6 +53,8 @@ public class CardServiceImplement implements CardService {
 
     private final CardMemberResponseMapper cardMemberResponseMapper;
 
+    private final CardCommentResponseMapper cardCommentResponseMapper;
+
     private final CommentRepository commentRepository;
 
     private final DeadlineRepository deadlineRepository;
@@ -70,6 +72,7 @@ public class CardServiceImplement implements CardService {
             CardFollowRepository cardFollowRepository,
             CardMemberRepository cardMemberRepository,
             CardMemberResponseMapper cardMemberResponseMapper,
+            CardCommentResponseMapper cardCommentResponseMapper,
             CommentRepository commentRepository,
             DeadlineRepository deadlineRepository,
             ActivityRepository activityRepository
@@ -84,6 +87,7 @@ public class CardServiceImplement implements CardService {
         this.cardFollowRepository = cardFollowRepository;
         this.cardMemberRepository = cardMemberRepository;
         this.cardMemberResponseMapper = cardMemberResponseMapper;
+        this.cardCommentResponseMapper = cardCommentResponseMapper;
         this.commentRepository = commentRepository;
         this.deadlineRepository = deadlineRepository;
         this.activityRepository = activityRepository;
@@ -451,10 +455,107 @@ public class CardServiceImplement implements CardService {
         );
     }
 
+    @Override
+    public void updateCompleteFieldOfDeadline(
+            String accountId,
+            UUID cardId,
+            CompleteDeadlineRequest request
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        checkManageCardPermission(account, card);
+        Deadline deadline = deadlineRepository.findDeadlineByCard(card);
+        if (deadline == null) {
+            throw new DataNotFoundException("Thẻ chưa được đặt hạn chót");
+        } else {
+            deadline.setComplete(request.getComplete());
+            deadlineRepository.save(deadline);
+        }
+    }
+
+    @Override
+    public CardCommentResponse createComment(String accountId, UUID cardId, CommentRequest request) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        checkHasAnyRoleInTable(account, card);
+        return cardCommentResponseMapper.apply(
+                commentRepository.save(
+                        Comment
+                            .builder()
+                                .comment(request.getComment())
+                                .update(false)
+                                .account(account)
+                                .card(card)
+                                .build()
+
+                )
+        );
+    }
+
+    @Override
+    public List<CardCommentResponse> readCommentsList(String accountId, UUID cardId) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        checkReadCardPermission(account, card);
+        return commentRepository
+                .findCommentsByCardOrderByCreatedAtDesc(card)
+                .stream()
+                .map(cardCommentResponseMapper)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void deleteComment(String accountId, UUID cardId, UUID commentId) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        Comment comment = getCommentById(commentId);
+        if (comment.getAccount().getUuid().equals(account.getUuid())){
+            checkHasAnyRoleInTable(account, card);
+        } else {
+            checkAdminPermissionInTable(account, card);
+        }
+        commentRepository.deleteById(comment.getUuid());
+    }
+
+    @Override
+    public CardCommentResponse readComment(String accountId, UUID cardId, UUID commentId) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        checkReadCardPermission(account, card);
+        return cardCommentResponseMapper.apply(
+                getCommentById(commentId)
+        );
+    }
+
+    @Override
+    public CardCommentResponse revokeComment(String accountId, UUID cardId, UUID commentId) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        Comment comment = getCommentById(commentId);
+        if (comment.getAccount().getUuid().equals(account.getUuid())){
+            checkHasAnyRoleInTable(account, card);
+        } else {
+            checkAdminPermissionInTable(account, card);
+        }
+        comment.setComment("");
+        comment.setUpdate(true);
+        return cardCommentResponseMapper
+                .apply(
+                        commentRepository.save(comment)
+                );
+    }
+
     private Card getCardFromId(UUID cardId) throws DataNotFoundException {
         return cardRepository
                 .findById(cardId)
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy thẻ công việc"));
+    }
+
+    private Comment getCommentById(UUID commentId) throws DataNotFoundException {
+        return commentRepository
+                .findById(commentId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy bình luận"));
     }
 
     private Account getAccountFromId(UUID accountId) throws DataNotFoundException {
