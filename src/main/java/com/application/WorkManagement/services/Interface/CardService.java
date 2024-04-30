@@ -4,6 +4,7 @@ import com.application.WorkManagement.dto.requests.card.*;
 import com.application.WorkManagement.dto.responses.card.CardListResponse;
 import com.application.WorkManagement.dto.responses.card.CardMemberResponse;
 import com.application.WorkManagement.dto.responses.card.CardResponse;
+import com.application.WorkManagement.dto.responses.card.ListResponse;
 import com.application.WorkManagement.dto.responses.card.comment.CardCommentResponse;
 import com.application.WorkManagement.dto.responses.table.TableMemberResponse;
 import com.application.WorkManagement.exceptions.custom.*;
@@ -54,4 +55,14 @@ public interface CardService {
     CardCommentResponse readComment(String accountId, UUID cardId, UUID commentId) throws DataNotFoundException, CustomAccessDeniedException;
 
     CardCommentResponse revokeComment(String accountId, UUID cardId, UUID commentId) throws DataNotFoundException, CustomAccessDeniedException;
+
+    ListResponse createToDoList(String accountId, UUID cardId, ListRequest request) throws DataNotFoundException, CustomAccessDeniedException;
+
+    List<ListResponse> readToDoLists(String accountId, UUID cardId) throws DataNotFoundException, CustomAccessDeniedException;
+
+    ListResponse readToDoListById(String accountId, UUID cardId, UUID listId) throws DataNotFoundException, CustomAccessDeniedException;
+
+    ListResponse updateToDoList(String accountId, UUID cardId, UUID listId, ListRequest request) throws DataNotFoundException, CustomAccessDeniedException;
+
+    void deleteToDoList(String accountId, UUID cardId, UUID listId) throws DataNotFoundException, CustomAccessDeniedException;
 }

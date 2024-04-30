@@ -1,14 +1,12 @@
 package com.application.WorkManagement.services.card;
 
-import com.application.WorkManagement.dto.mappers.card.CardCommentResponseMapper;
-import com.application.WorkManagement.dto.mappers.card.CardListResponseMapper;
-import com.application.WorkManagement.dto.mappers.card.CardMemberResponseMapper;
-import com.application.WorkManagement.dto.mappers.card.CardResponseMapper;
+import com.application.WorkManagement.dto.mappers.card.*;
 import com.application.WorkManagement.dto.mappers.table.TableMemberMapper;
 import com.application.WorkManagement.dto.requests.card.*;
 import com.application.WorkManagement.dto.responses.card.CardListResponse;
 import com.application.WorkManagement.dto.responses.card.CardMemberResponse;
 import com.application.WorkManagement.dto.responses.card.CardResponse;
+import com.application.WorkManagement.dto.responses.card.ListResponse;
 import com.application.WorkManagement.dto.responses.card.comment.CardCommentResponse;
 import com.application.WorkManagement.dto.responses.table.TableMemberResponse;
 import com.application.WorkManagement.entities.*;
@@ -61,6 +59,10 @@ public class CardServiceImplement implements CardService {
 
     private final ActivityRepository activityRepository;
 
+    private final ListResponseMapper listResponseMapper;
+
+    private final ListRepository listRepository;
+
     public CardServiceImplement(
             AccountRepository accountRepository,
             TablePermissionChecker tablePermissionChecker,
@@ -75,7 +77,9 @@ public class CardServiceImplement implements CardService {
             CardCommentResponseMapper cardCommentResponseMapper,
             CommentRepository commentRepository,
             DeadlineRepository deadlineRepository,
-            ActivityRepository activityRepository
+            ActivityRepository activityRepository,
+            ListResponseMapper listResponseMapper,
+            ListRepository listRepository
     ) {
         this.accountRepository = accountRepository;
         this.tablePermissionChecker = tablePermissionChecker;
@@ -91,6 +95,8 @@ public class CardServiceImplement implements CardService {
         this.commentRepository = commentRepository;
         this.deadlineRepository = deadlineRepository;
         this.activityRepository = activityRepository;
+        this.listResponseMapper = listResponseMapper;
+        this.listRepository = listRepository;
     }
 
     @Override
@@ -546,10 +552,76 @@ public class CardServiceImplement implements CardService {
                 );
     }
 
+    @Override
+    public ListResponse createToDoList(String accountId, UUID cardId, ListRequest request) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        checkManageCardPermission(account, card);
+        return listResponseMapper.apply(
+            listRepository.save(
+                    ListEntity
+                            .builder()
+                            .name(request.getName())
+                            .account(account)
+                            .card(card)
+                            .build()
+            )
+        );
+    }
+
+    @Override
+    public List<ListResponse> readToDoLists(String accountId, UUID cardId) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        checkReadCardPermission(account, card);
+        return listRepository
+                .findListEntitiesByCardOrderByCreatedAtDesc(card)
+                .stream()
+                .map(listResponseMapper)
+                .toList();
+    }
+
+    @Override
+    public ListResponse readToDoListById(String accountId, UUID cardId, UUID listId) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        checkReadCardPermission(account, card);
+        return listResponseMapper.apply(
+            getListById(listId)
+        );
+    }
+
+    @Override
+    public ListResponse updateToDoList(String accountId, UUID cardId, UUID listId, ListRequest request) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        checkManageCardPermission(account, card);
+        ListEntity list = getListById(listId);
+        list.setName(request.getName());
+        return listResponseMapper.apply(
+                listRepository.save(list)
+        );
+    }
+
+    @Override
+    @Transactional
+    public void deleteToDoList(String accountId, UUID cardId, UUID listId) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        checkManageCardPermission(account, card);
+        listRepository.deleteById(listId);
+    }
+
     private Card getCardFromId(UUID cardId) throws DataNotFoundException {
         return cardRepository
                 .findById(cardId)
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy thẻ công việc"));
+    }
+
+    private ListEntity getListById(UUID listId) throws DataNotFoundException {
+        return listRepository
+                .findById(listId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy việc cần làm"));
     }
 
     private Comment getCommentById(UUID commentId) throws DataNotFoundException {
