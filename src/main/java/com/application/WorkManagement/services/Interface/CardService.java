@@ -1,10 +1,7 @@
 package com.application.WorkManagement.services.Interface;
 
 import com.application.WorkManagement.dto.requests.card.*;
-import com.application.WorkManagement.dto.responses.card.CardListResponse;
-import com.application.WorkManagement.dto.responses.card.CardMemberResponse;
-import com.application.WorkManagement.dto.responses.card.CardResponse;
-import com.application.WorkManagement.dto.responses.card.ListResponse;
+import com.application.WorkManagement.dto.responses.card.*;
 import com.application.WorkManagement.dto.responses.card.comment.CardCommentResponse;
 import com.application.WorkManagement.dto.responses.table.TableMemberResponse;
 import com.application.WorkManagement.exceptions.custom.*;
@@ -65,4 +62,16 @@ public interface CardService {
     ListResponse updateToDoList(String accountId, UUID cardId, UUID listId, ListRequest request) throws DataNotFoundException, CustomAccessDeniedException;
 
     void deleteToDoList(String accountId, UUID cardId, UUID listId) throws DataNotFoundException, CustomAccessDeniedException;
+
+    TaskResponse createTask(String accountId, UUID cardId, UUID listId, TaskRequest request) throws DataNotFoundException, CustomAccessDeniedException;
+
+    List<TaskResponse> readTaskList(String accountId, UUID cardId, UUID listId) throws DataNotFoundException, CustomAccessDeniedException;
+
+    TaskResponse readTask(String accountId, UUID cardId, UUID listId, UUID taskId) throws DataNotFoundException, CustomAccessDeniedException;
+
+    TaskResponse updateTaskName(String accountId, UUID cardId, UUID listId, UUID taskId, TaskRequest request) throws DataNotFoundException, CustomAccessDeniedException;
+
+    TaskResponse updateTaskComplete(String accountId, UUID cardId, UUID listId, UUID taskId, TaskCompleteRequest request) throws DataNotFoundException, CustomAccessDeniedException;
+
+    void deleteTask(String accountId, UUID cardId, UUID listId, UUID taskId) throws DataNotFoundException, CustomAccessDeniedException;
 }

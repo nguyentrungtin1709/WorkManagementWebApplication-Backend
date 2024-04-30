@@ -3,14 +3,10 @@ package com.application.WorkManagement.services.card;
 import com.application.WorkManagement.dto.mappers.card.*;
 import com.application.WorkManagement.dto.mappers.table.TableMemberMapper;
 import com.application.WorkManagement.dto.requests.card.*;
-import com.application.WorkManagement.dto.responses.card.CardListResponse;
-import com.application.WorkManagement.dto.responses.card.CardMemberResponse;
-import com.application.WorkManagement.dto.responses.card.CardResponse;
-import com.application.WorkManagement.dto.responses.card.ListResponse;
+import com.application.WorkManagement.dto.responses.card.*;
 import com.application.WorkManagement.dto.responses.card.comment.CardCommentResponse;
 import com.application.WorkManagement.dto.responses.table.TableMemberResponse;
 import com.application.WorkManagement.entities.*;
-import com.application.WorkManagement.entities.CompositePrimaryKeys.CardCompositeId;
 import com.application.WorkManagement.enums.ActivityType;
 import com.application.WorkManagement.exceptions.custom.*;
 import com.application.WorkManagement.repositories.*;
@@ -22,8 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -63,6 +57,10 @@ public class CardServiceImplement implements CardService {
 
     private final ListRepository listRepository;
 
+    private final TaskResponseMapper taskResponseMapper;
+
+    private final TaskRepository taskRepository;
+
     public CardServiceImplement(
             AccountRepository accountRepository,
             TablePermissionChecker tablePermissionChecker,
@@ -79,7 +77,9 @@ public class CardServiceImplement implements CardService {
             DeadlineRepository deadlineRepository,
             ActivityRepository activityRepository,
             ListResponseMapper listResponseMapper,
-            ListRepository listRepository
+            ListRepository listRepository,
+            TaskResponseMapper taskResponseMapper,
+            TaskRepository taskRepository
     ) {
         this.accountRepository = accountRepository;
         this.tablePermissionChecker = tablePermissionChecker;
@@ -97,6 +97,8 @@ public class CardServiceImplement implements CardService {
         this.activityRepository = activityRepository;
         this.listResponseMapper = listResponseMapper;
         this.listRepository = listRepository;
+        this.taskResponseMapper = taskResponseMapper;
+        this.taskRepository = taskRepository;
     }
 
     @Override
@@ -612,10 +614,100 @@ public class CardServiceImplement implements CardService {
         listRepository.deleteById(listId);
     }
 
+    @Override
+    public TaskResponse createTask(String accountId, UUID cardId, UUID listId, TaskRequest request) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        ListEntity list = getListById(listId);
+        checkManageCardPermission(account, card);
+        return taskResponseMapper
+                .apply(
+                    taskRepository.save(
+                            TaskEntity
+                                    .builder()
+                                    .name(request.getName())
+                                    .complete(false)
+                                    .account(account)
+                                    .listEntity(list)
+                                    .build()
+                    )
+                );
+    }
+
+    @Override
+    public List<TaskResponse> readTaskList(String accountId, UUID cardId, UUID listId) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        ListEntity list = getListById(listId);
+        checkReadCardPermission(account, card);
+        return taskRepository
+                .findTaskEntitiesByListEntityOrderByCreatedAt(list)
+                .stream()
+                .map(taskResponseMapper)
+                .toList();
+    }
+
+    @Override
+    public TaskResponse readTask(String accountId, UUID cardId, UUID listId, UUID taskId) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        ListEntity list = getListById(listId);
+        checkReadCardPermission(account, card);
+        return taskResponseMapper.apply(
+            getTaskById(taskId)
+        );
+    }
+
+    @Override
+    public TaskResponse updateTaskName(String accountId, UUID cardId, UUID listId, UUID taskId, TaskRequest request) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        ListEntity list = getListById(listId);
+        TaskEntity task = getTaskById(taskId);
+        checkManageCardPermission(account, card);
+        task.setName(request.getName());
+        return taskResponseMapper.apply(
+                taskRepository.save(
+                    task
+                )
+        );
+    }
+
+    @Override
+    public TaskResponse updateTaskComplete(String accountId, UUID cardId, UUID listId, UUID taskId, TaskCompleteRequest request) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        ListEntity list = getListById(listId);
+        TaskEntity task = getTaskById(taskId);
+        checkManageCardPermission(account, card);
+        task.setComplete(request.getComplete());
+        return taskResponseMapper.apply(
+                taskRepository.save(
+                        task
+                )
+        );
+    }
+
+    @Override
+    @Transactional
+    public void deleteTask(String accountId, UUID cardId, UUID listId, UUID taskId) throws DataNotFoundException, CustomAccessDeniedException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        ListEntity list = getListById(listId);
+        checkManageCardPermission(account, card);
+        taskRepository.deleteById(taskId);
+    }
+
     private Card getCardFromId(UUID cardId) throws DataNotFoundException {
         return cardRepository
                 .findById(cardId)
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy thẻ công việc"));
+    }
+
+    private TaskEntity getTaskById(UUID taskId) throws DataNotFoundException {
+        return taskRepository
+                .findById(taskId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy công việc"));
     }
 
     private ListEntity getListById(UUID listId) throws DataNotFoundException {

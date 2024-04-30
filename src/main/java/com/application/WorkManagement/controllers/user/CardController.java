@@ -4,6 +4,7 @@ import com.application.WorkManagement.dto.requests.card.*;
 import com.application.WorkManagement.dto.responses.card.CardMemberResponse;
 import com.application.WorkManagement.dto.responses.card.CardResponse;
 import com.application.WorkManagement.dto.responses.card.ListResponse;
+import com.application.WorkManagement.dto.responses.card.TaskResponse;
 import com.application.WorkManagement.dto.responses.card.comment.CardCommentResponse;
 import com.application.WorkManagement.dto.responses.table.TableMemberResponse;
 import com.application.WorkManagement.exceptions.custom.*;
@@ -452,6 +453,127 @@ public class CardController {
                 token.getName(),
                 cardId,
                 listId
+        );
+        return ResponseEntity
+                .noContent()
+                .build();
+    }
+
+    @PostMapping("/{cardId}/to-do-list/{listId}/tasks")
+    public ResponseEntity<TaskResponse> createTask(
+            JwtAuthenticationToken token,
+            @PathVariable("cardId") UUID cardId,
+            @PathVariable("listId") UUID listId,
+            @Valid @RequestBody TaskRequest request
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                    cardService.createTask(
+                            token.getName(),
+                            cardId,
+                            listId,
+                            request
+                    )
+                );
+    }
+
+    @GetMapping("/{cardId}/to-do-list/{listId}/tasks")
+    public ResponseEntity<List<TaskResponse>> readTaskList(
+            JwtAuthenticationToken token,
+            @PathVariable("cardId") UUID cardId,
+            @PathVariable("listId") UUID listId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        cardService.readTaskList(
+                            token.getName(),
+                            cardId,
+                            listId
+                        )
+                );
+    }
+
+    @GetMapping("/{cardId}/to-do-list/{listId}/tasks/{taskId}")
+    public ResponseEntity<TaskResponse> readTask(
+            JwtAuthenticationToken token,
+            @PathVariable("cardId") UUID cardId,
+            @PathVariable("listId") UUID listId,
+            @PathVariable("taskId") UUID taskId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        cardService
+                                .readTask(
+                                        token.getName(),
+                                        cardId,
+                                        listId,
+                                        taskId
+                                )
+                );
+    }
+
+    @PatchMapping("/{cardId}/to-do-list/{listId}/tasks/{taskId}/name")
+    public ResponseEntity<TaskResponse> updateTaskName(
+            JwtAuthenticationToken token,
+            @PathVariable("cardId") UUID cardId,
+            @PathVariable("listId") UUID listId,
+            @PathVariable("taskId") UUID taskId,
+            @Valid @RequestBody TaskRequest request
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        cardService.updateTaskName(
+                            token.getName(),
+                            cardId,
+                            listId,
+                            taskId,
+                            request
+                        )
+                );
+    }
+
+    @PatchMapping("/{cardId}/to-do-list/{listId}/tasks/{taskId}/complete")
+    public ResponseEntity<TaskResponse> updateTaskComplete(
+            JwtAuthenticationToken token,
+            @PathVariable("cardId") UUID cardId,
+            @PathVariable("listId") UUID listId,
+            @PathVariable("taskId") UUID taskId,
+            @Valid @RequestBody TaskCompleteRequest request
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                    cardService.updateTaskComplete(
+                            token.getName(),
+                            cardId,
+                            listId,
+                            taskId,
+                            request
+                    )
+                );
+    }
+
+    @DeleteMapping("/{cardId}/to-do-list/{listId}/tasks/{taskId}")
+    public ResponseEntity<Void> deleteTask(
+            JwtAuthenticationToken token,
+            @PathVariable("cardId") UUID cardId,
+            @PathVariable("listId") UUID listId,
+            @PathVariable("taskId") UUID taskId
+    ) throws DataNotFoundException, CustomAccessDeniedException {
+        cardService.deleteTask(
+                token.getName(),
+                cardId,
+                listId,
+                taskId
         );
         return ResponseEntity
                 .noContent()
