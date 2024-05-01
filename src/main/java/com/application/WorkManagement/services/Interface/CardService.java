@@ -74,4 +74,6 @@ public interface CardService {
     TaskResponse updateTaskComplete(String accountId, UUID cardId, UUID listId, UUID taskId, TaskCompleteRequest request) throws DataNotFoundException, CustomAccessDeniedException;
 
     void deleteTask(String accountId, UUID cardId, UUID listId, UUID taskId) throws DataNotFoundException, CustomAccessDeniedException;
+
+    void updateDeadline(String accountId, UUID cardId, DeadlineRequest request) throws DataNotFoundException, CustomAccessDeniedException, InvalidDeadlineException;
 }

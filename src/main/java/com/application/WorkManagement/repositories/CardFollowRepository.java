@@ -7,11 +7,15 @@ import com.application.WorkManagement.entities.CompositePrimaryKeys.CardComposit
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface CardFollowRepository extends JpaRepository<CardFollow, CardCompositeId> {
 
     Boolean existsCardFollowByAccountAndCard(Account account, Card card);
 
     void deleteCardFollowByAccountAndCard(Account account, Card card);
+
+    List<CardFollow> findCardFollowsByAccount(Account account);
 
 }

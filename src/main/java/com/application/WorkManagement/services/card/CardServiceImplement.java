@@ -450,10 +450,73 @@ public class CardServiceImplement implements CardService {
         Card card = getCardFromId(cardId);
         checkManageCardPermission(account, card);
         deadlineRepository.deleteDeadlineByCard(card);
+        activityRepository.deleteActivitiesByActivityTypeAndCard(ActivityType.NOTIFICATION_DEADLINE, card);
+        activityRepository.deleteActivitiesByActivityTypeAndCard(ActivityType.REMINDER_DEADLINE, card);
         activityRepository.save(
                 Activity
                         .builder()
                         .activityType(ActivityType.DELETE_DEADLINE)
+                        .createdAt(LocalDateTime.now())
+                        .account(account)
+                        .table(card.getCategory().getTable())
+                        .category(card.getCategory())
+                        .card(card)
+                        .build()
+        );
+    }
+
+    @Override
+    @Transactional
+    public void updateDeadline(String accountId, UUID cardId, DeadlineRequest request) throws DataNotFoundException, CustomAccessDeniedException, InvalidDeadlineException {
+        Account account = getAccountFromAuthenticationName(accountId);
+        Card card = getCardFromId(cardId);
+        checkManageCardPermission(account, card);
+        Deadline deadline = deadlineRepository.findDeadlineByCard(card);
+        if (deadline == null) {
+            throw new DataNotFoundException("Thẻ chưa được đặt ngày hết hạn");
+        }
+        LocalDateTime newDeadline = Instant
+                .ofEpochMilli(request.getDeadline())
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
+        if (newDeadline.isBefore(LocalDateTime.now())) {
+            throw new InvalidDeadlineException("Ngày hết hạn không hợp lệ");
+        }
+        LocalDateTime reminder = newDeadline.minusDays(request.getReminder());
+        if (reminder.isBefore(LocalDateTime.now())) {
+            throw new InvalidDeadlineException("Ngày nhắc nhở không hợp lệ");
+        }
+        deadline.setDeadline(newDeadline);
+        deadline.setReminderDate(reminder);
+        deadlineRepository.save(deadline);
+        activityRepository.deleteActivitiesByActivityTypeAndCard(ActivityType.NOTIFICATION_DEADLINE, card);
+        activityRepository.save(
+                Activity
+                        .builder()
+                        .activityType(ActivityType.NOTIFICATION_DEADLINE)
+                        .createdAt(newDeadline)
+                        .account(account)
+                        .table(card.getCategory().getTable())
+                        .category(card.getCategory())
+                        .card(card)
+                        .build()
+        );
+        activityRepository.deleteActivitiesByActivityTypeAndCard(ActivityType.REMINDER_DEADLINE, card);
+        activityRepository.save(
+                Activity
+                        .builder()
+                        .activityType(ActivityType.REMINDER_DEADLINE)
+                        .createdAt(reminder)
+                        .account(account)
+                        .table(card.getCategory().getTable())
+                        .category(card.getCategory())
+                        .card(card)
+                        .build()
+        );
+        activityRepository.save(
+                Activity
+                        .builder()
+                        .activityType(ActivityType.CHANGE_DEADLINE)
                         .createdAt(LocalDateTime.now())
                         .account(account)
                         .table(card.getCategory().getTable())
@@ -474,7 +537,7 @@ public class CardServiceImplement implements CardService {
         checkManageCardPermission(account, card);
         Deadline deadline = deadlineRepository.findDeadlineByCard(card);
         if (deadline == null) {
-            throw new DataNotFoundException("Thẻ chưa được đặt hạn chót");
+            throw new DataNotFoundException("Thẻ chưa được đặt ngày hết hạn");
         } else {
             deadline.setComplete(request.getComplete());
             deadlineRepository.save(deadline);

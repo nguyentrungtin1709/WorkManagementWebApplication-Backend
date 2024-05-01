@@ -17,9 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 
@@ -249,6 +246,18 @@ public class CardController {
             @Valid @RequestBody DeadlineRequest request
     ) throws DataNotFoundException, InvalidDeadlineException, CustomAccessDeniedException, CustomDuplicateException {
         cardService.setDeadline(token.getName(), cardId, request);
+        return ResponseEntity
+                .noContent()
+                .build();
+    }
+
+    @PatchMapping("/{cardId}/deadline")
+    public ResponseEntity<Void> updateDeadline(
+            JwtAuthenticationToken token,
+            @PathVariable("cardId") UUID cardId,
+            @Valid @RequestBody DeadlineRequest request
+    ) throws DataNotFoundException, InvalidDeadlineException, CustomAccessDeniedException {
+        cardService.updateDeadline(token.getName(), cardId, request);
         return ResponseEntity
                 .noContent()
                 .build();
