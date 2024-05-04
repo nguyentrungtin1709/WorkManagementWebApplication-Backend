@@ -297,6 +297,13 @@ public class CardServiceImplement implements CardService {
                 .stream()
                 .map(CardMember::getAccount)
                 .toList();
+        if (membersOfCard.isEmpty()) {
+            return tableMemberRepository
+                    .findTableMembersByTable(card.getCategory().getTable())
+                    .stream()
+                    .map(tableMemberMapper)
+                    .toList();
+        }
         return tableMemberRepository
                 .findTableMembersByTableAndAccountNotIn(
                     card.getCategory().getTable(),
